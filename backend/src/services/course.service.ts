@@ -1,14 +1,12 @@
-export const getCourses = () => {
-  return [
-    {
-      id: 1,
-      title: "Flutter Asoslari",
-      lessons: 24,
+import { prisma } from "../config/prisma";
+
+export const getCourses = async () => {
+  return await prisma.course.findMany({
+    where: {
+      isPublished: true,
     },
-    {
-      id: 2,
-      title: "Node.js Backend",
-      lessons: 31,
+    orderBy: {
+      createdAt: "desc",
     },
-  ];
+  });
 };
