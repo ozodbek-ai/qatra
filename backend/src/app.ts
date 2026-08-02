@@ -1,13 +1,16 @@
 import express from "express";
+
 import cors from "cors";
+import authRoutes from "./routes/auth.routes";
 
 import courseRoutes from "./routes/course.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 
-const app = express();
 
-app.use(cors());
+
+const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.get("/", (req, res) => {
   res.json({
@@ -24,6 +27,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/courses", courseRoutes);
 
 // ❗ Error middleware eng oxirida bo'lishi kerak
