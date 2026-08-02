@@ -24,13 +24,49 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
 model Course {
+  id           String        @id @default(cuid())
+
+  title        String
+  slug         String        @unique
+  description  String
+
+  imageUrl     String?
+
+  price        Decimal       @db.Decimal(10,2)
+
+  lessons      Lesson[]
+
+  level        CourseLevel   @default(BEGINNER)
+
+  isPublished  Boolean       @default(false)
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+model Lesson {
   id          String   @id @default(cuid())
+
   title       String
-  description String
-  imageUrl    String?
-  lessons     Int
-  isPublished Boolean  @default(false)
+  description String?
+
+  videoUrl    String?
+
+  duration    Int
+
+  order       Int
+
+  isPreview   Boolean  @default(false)
+
+  courseId    String
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

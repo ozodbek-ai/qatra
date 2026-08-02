@@ -5,7 +5,7 @@ import authRoutes from "./routes/auth.routes";
 
 import courseRoutes from "./routes/course.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
-
+import lessonRoutes from "./routes/lesson.routes.js";
 
 
 const app = express();
@@ -32,5 +32,6 @@ app.use("/api/v1/courses", courseRoutes);
 
 // ❗ Error middleware eng oxirida bo'lishi kerak
 app.use(errorHandler);
+app.use("/api/v1/lessons", lessonRoutes);
 
 export default app;

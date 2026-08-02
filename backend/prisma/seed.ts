@@ -5,21 +5,27 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.course.createMany({
-    data: [
-      {
-        title: "Flutter Asoslari",
-        description: "Flutter yordamida mobil ilovalar yaratish kursi.",
-        lessons: 24,
-        isPublished: true,
-      },
-      {
-        title: "Node.js Backend",
-        description: "Node.js va Express bilan backend dasturlash.",
-        lessons: 31,
-        isPublished: true,
-      },
-    ],
-  });
+  data: [
+    {
+      title: "Flutter Asoslari",
+      slug: "flutter-asoslari",
+      description: "Flutter yordamida mobil ilovalar yaratish.",
+      lessons: 24,
+      price: 199000,
+      level: "BEGINNER",
+      isPublished: true,
+    },
+    {
+      title: "Node.js Backend",
+      slug: "nodejs-backend",
+      description: "Express va Prisma bilan backend.",
+      lessons: 31,
+      price: 249000,
+      level: "INTERMEDIATE",
+      isPublished: true,
+    },
+  ],
+});
 
   console.log("✅ Kurslar qo'shildi.");
 }
