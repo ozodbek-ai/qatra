@@ -42,3 +42,13 @@ export const deleteLesson = (id: string) => {
     },
   });
 };
+export const findLessonsByCourseOrdered = (courseId: string) => {
+  return prisma.lesson.findMany({
+    where: {
+      courseId,
+    },
+    orderBy: {
+      order: "asc",
+    },
+  });
+};

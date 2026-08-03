@@ -6,6 +6,8 @@ import authRoutes from "./routes/auth.routes";
 import courseRoutes from "./routes/course.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import lessonRoutes from "./routes/lesson.routes.js";
+import enrollmentRoutes from "./routes/enrollment.routes.js";
+import progressRoutes from "./routes/progress.routes.js";
 
 
 const app = express();
@@ -29,9 +31,11 @@ app.get("/health", (req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/courses", courseRoutes);
+app.use("/api/v1/progress", progressRoutes);
+app.use("/api/v1/lessons", lessonRoutes);
+app.use("/api/v1/enrollments", enrollmentRoutes);
 
 // ❗ Error middleware eng oxirida bo'lishi kerak
 app.use(errorHandler);
-app.use("/api/v1/lessons", lessonRoutes);
 
 export default app;
