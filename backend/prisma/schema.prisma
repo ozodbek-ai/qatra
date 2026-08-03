@@ -14,13 +14,18 @@ enum UserRole {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  fullName  String
-  email     String   @unique
-  password  String
-  role      UserRole @default(STUDENT)
-  enrollments Enrollment[]
+  id             String           @id @default(cuid())
+  fullName       String
+  email          String           @unique
+  password       String
+  role           UserRole         @default(STUDENT)
+  enrollments    Enrollment[]
+  quizAttempts   QuizAttempt[]
   lessonProgress LessonProgress[]
+
+  courseCompletions CourseCompletion[]
+
+  certificates Certificate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -33,76 +38,180 @@ enum CourseLevel {
 }
 
 model Course {
-  id           String        @id @default(cuid())
+  id String @id @default(cuid())
 
-  title        String
-  slug         String        @unique
-  description  String
+  title       String
+  slug        String @unique
+  description String
 
-  imageUrl     String?
+  imageUrl String?
 
-  price        Decimal       @db.Decimal(10,2)
+  price Decimal @db.Decimal(10, 2)
 
-  lessons      Lesson[]
+  lessons Lesson[]
 
   enrollments Enrollment[]
 
-  level        CourseLevel   @default(BEGINNER)
+  completions CourseCompletion[]
 
-  isPublished  Boolean       @default(false)
+  certificates Certificate[]
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  level CourseLevel @default(BEGINNER)
+
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
+
 model Lesson {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
   title       String
   description String?
 
-  videoUrl    String?
+  videoUrl String?
 
-  duration    Int
+  duration Int
 
-  order       Int
+  order Int
 
-  isPreview   Boolean  @default(false)
+  isPreview Boolean @default(false)
 
-  courseId    String
+  courseId String
 
   progress LessonProgress[]
 
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quiz Quiz?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
-model Enrollment {
-  id        String   @id @default(cuid())
 
-  userId    String
-  courseId  String
+model Enrollment {
+  id String @id @default(cuid())
+
+  userId   String
+  courseId String
 
   enrolledAt DateTime @default(now())
 
-  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
 }
 
 model LessonProgress {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId      String
-  lessonId    String
+  userId   String
+  lessonId String
 
-  completed   Boolean  @default(false)
+  completed Boolean @default(false)
 
   completedAt DateTime?
 
-  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson       Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
+}
+
+model Quiz {
+  id       String @id @default(cuid())
+
+  lessonId String @unique
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  title       String?
+  description String?
+
+  passPercentage Int @default(70)
+
+  questions Question[]
+
+  attempts QuizAttempt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Question {
+  id String @id @default(cuid())
+
+  quizId String
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  question String
+
+  options Option[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Option {
+  id String @id @default(cuid())
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  text String
+
+  isCorrect Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model QuizAttempt {
+  id String @id @default(cuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  quizId String
+  quiz   Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  score Int
+  total Int
+
+  percentage Int @default(0)
+
+  passed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+model CourseCompletion {
+  id          String   @id @default(cuid())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  completedAt DateTime @default(now())
+
+  certificate Certificate?
+
+  @@unique([userId, courseId])
+}
+model Certificate {
+  id String @id @default(cuid())
+
+  certificateNo String @unique
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  completionId String @unique
+  completion CourseCompletion @relation(fields: [completionId], references: [id], onDelete: Cascade)
+
+  issuedAt DateTime @default(now())
 }

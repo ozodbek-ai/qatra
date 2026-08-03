@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import * as courseCompletionService from "./course-completion.service.js";
 import * as progressRepository from "../repositories/progress.repository.js";
 import * as enrollmentRepository from "../repositories/enrollment.repository.js";
 import * as lessonRepository from "../repositories/lesson.repository.js";
@@ -35,17 +36,27 @@ export const completeLesson = async (
     lessonId
   );
 
+  let result;
+
   if (progress) {
-    return progressRepository.updateProgress(
+    result = await progressRepository.updateProgress(
+      userId,
+      lessonId
+    );
+  } else {
+    result = await progressRepository.createProgress(
       userId,
       lessonId
     );
   }
 
-  return progressRepository.createProgress(
+  // Kurs yakunlanganligini tekshirish
+  await courseCompletionService.checkCourseCompletion(
     userId,
-    lessonId
+    lesson.courseId
   );
+
+  return result;
 };
 
 export const getCourseProgress = async (
@@ -69,7 +80,9 @@ export const getCourseProgress = async (
     throw new AppError("Kurs topilmadi.", 404);
   }
 
-  const lessonIds = course.lessons.map((lesson) => lesson.id);
+  const lessonIds = course.lessons.map(
+    (lesson) => lesson.id
+  );
 
   const completedLessons =
     await progressRepository.countCompletedLessons(
@@ -82,7 +95,9 @@ export const getCourseProgress = async (
   const progress =
     totalLessons === 0
       ? 0
-      : Math.round((completedLessons / totalLessons) * 100);
+      : Math.round(
+          (completedLessons / totalLessons) * 100
+        );
 
   return {
     courseId: course.id,
@@ -107,16 +122,14 @@ export const continueLearning = async (
     throw new AppError("Kurs topilmadi.", 404);
   }
 
-  const lessons = await lessonRepository.findLessonsByCourseOrdered(
-    courseId
+  const lessons =
+    await lessonRepository.findLessonsByCourseOrdered(
+      courseId
+    );
+
+  const lessonIds = lessons.map(
+    (lesson) => lesson.id
   );
-
-  console.log("USER ID:", userId);
-  console.log("LESSONS:", lessons);
-
-  const lessonIds = lessons.map((lesson) => lesson.id);
-
-  console.log("LESSON IDS:", lessonIds);
 
   const completed =
     await progressRepository.getCompletedLessonIds(
@@ -124,19 +137,15 @@ export const continueLearning = async (
       lessonIds
     );
 
-  console.log("COMPLETED:", completed);
-
   const completedIds = new Set(
-    completed.map((item) => item.lessonId)
+    completed.map(
+      (item) => item.lessonId
+    )
   );
-
-  console.log("COMPLETED IDS:", completedIds);
 
   const nextLesson = lessons.find(
     (lesson) => !completedIds.has(lesson.id)
   );
-
-  console.log("NEXT LESSON:", nextLesson);
 
   return {
     courseId,

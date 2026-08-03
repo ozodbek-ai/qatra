@@ -1,46 +1,49 @@
 import { Router } from "express";
-import { createLessonController,
-  getLessonsByCourseController,
-  getLessonByIdController,
-  updateLessonController,
-  deleteLessonController,
- } from "../controllers/lesson.controller.js";
+import {
+  createOptionController,
+  getOptionController,
+  getOptionsByQuestionController,
+  updateOptionController,
+  deleteOptionController,
+} from "../controllers/option.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/authorize.middleware.js";
-import { upload } from "../middlewares/upload.middleware.js";
 
 const router = Router();
-
 
 router.post(
   "/",
   authMiddleware,
   authorize("ADMIN"),
-  upload.single("video"),
-  createLessonController
+  createOptionController
 );
+
 router.get(
-  "/course/:courseId",
-  getLessonsByCourseController
+  "/question/:questionId",
+  authMiddleware,
+  authorize("ADMIN"),
+  getOptionsByQuestionController
 );
+
 router.get(
   "/:id",
   authMiddleware,
-  getLessonByIdController
+  authorize("ADMIN"),
+  getOptionController
 );
 
 router.put(
   "/:id",
   authMiddleware,
   authorize("ADMIN"),
-  updateLessonController
+  updateOptionController
 );
 
 router.delete(
   "/:id",
   authMiddleware,
   authorize("ADMIN"),
-  deleteLessonController
+  deleteOptionController
 );
 
 export default router;
