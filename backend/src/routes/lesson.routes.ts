@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { createLessonController } from "../controllers/lesson.controller.js";
+import { createLessonController,
+  getLessonsByCourseController,
+  getLessonByIdController,
+  updateLessonController,
+  deleteLessonController,
+ } from "../controllers/lesson.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/authorize.middleware.js";
 
@@ -10,6 +15,25 @@ router.post(
   authMiddleware,
   authorize("ADMIN"),
   createLessonController
+);
+router.get(
+  "/course/:courseId",
+  getLessonsByCourseController
+);
+router.get("/:id", getLessonByIdController);
+
+router.put(
+  "/:id",
+  authMiddleware,
+  authorize("ADMIN"),
+  updateLessonController
+);
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  authorize("ADMIN"),
+  deleteLessonController
 );
 
 export default router;
