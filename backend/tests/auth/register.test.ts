@@ -40,24 +40,30 @@ describe("POST /api/v1/auth/register", () => {
   it("should reject duplicate email", async () => {
     const email = `duplicate-${Date.now()}@example.com`;
 
-    await api
-      .post("/api/v1/auth/register")
-      .send({
-        fullName: "Duplicate User",
-        email,
-        password: "Password123!",
-      });
+    const first = await api
+  .post("/api/v1/auth/register")
+  .send({
+    fullName: "Duplicate User",
+    email,
+    password: "Password123!",
+  });
 
-    const res = await api
-      .post("/api/v1/auth/register")
-      .send({
-        fullName: "Duplicate User",
-        email,
-        password: "Password123!",
-      });
+console.log("FIRST STATUS:", first.status);
+console.log("FIRST BODY:", first.body);
 
-    expect(res.status).toBe(409);
+const second = await api
+  .post("/api/v1/auth/register")
+  .send({
+    fullName: "Duplicate User",
+    email,
+    password: "Password123!",
+  });
 
-    expect(res.body.success).toBe(false);
+console.log("SECOND STATUS:", second.status);
+console.log("SECOND BODY:", second.body);
+
+expect(second.status).toBe(409);
+
+expect(second.body.success).toBe(false);
   });
 });
