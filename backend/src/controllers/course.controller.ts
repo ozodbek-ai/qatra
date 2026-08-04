@@ -6,6 +6,7 @@ import {
   updateCourseSchema,
 } from "../validators/course.validator.js";
 import * as courseService from "../services/course.service.js";
+import { publishCourseSchema } from "../validators/course.validator.js";
 
 export const getAllCourses = asyncHandler(async (req: Request, res: Response) => {
   const courses = await getCourses();
@@ -74,3 +75,24 @@ export const deleteCourseController = asyncHandler(
     });
   }
 );
+export const publishCourseController =
+asyncHandler(async (req, res) => {
+
+  const body =
+    publishCourseSchema.parse(req.body);
+
+  const course =
+    await courseService.publishCourse(
+      req.params.id,
+      body
+    );
+
+  res.json({
+    success: true,
+    message: body.isPublished
+      ? "Kurs muvaffaqiyatli nashr qilindi."
+      : "Kurs draft holatiga qaytarildi.",
+    data: course,
+  });
+
+});

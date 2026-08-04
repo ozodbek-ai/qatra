@@ -1,17 +1,27 @@
 import type { Request, Response } from "express";
-import { asyncHandler } from "../utils/asyncHandler";
-import { registerSchema } from "../validators/auth.validator";
-import { register } from "../services/auth.service";
-import { loginSchema } from "../validators/auth.validator";
-import { login } from "../services/auth.service";
+
+import { logger } from "../lib/logger.js";
+import {
+  login,
+  register,
+} from "../services/auth.service.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import {
+  loginSchema,
+  registerSchema,
+} from "../validators/auth.validator.js";
 
 export const registerController = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("BODY:", req.body);
-
     const data = registerSchema.parse(req.body);
 
     const user = await register(data);
+
+    logger.info({
+      message: "User registered",
+      userId: user.id,
+      email: user.email,
+    });
 
     res.status(201).json({
       success: true,
@@ -20,11 +30,17 @@ export const registerController = asyncHandler(
     });
   }
 );
+
 export const loginController = asyncHandler(
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     const data = loginSchema.parse(req.body);
 
     const result = await login(data);
+
+    logger.info({
+      message: "User logged in",
+      userId: result.user.id,
+    });
 
     res.status(200).json({
       success: true,
@@ -35,7 +51,7 @@ export const loginController = asyncHandler(
 );
 
 export const meController = asyncHandler(
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: req.user,
@@ -44,7 +60,9 @@ export const meController = asyncHandler(
 );
 
 export const adminController = asyncHandler(
-  async (_req, res) => {
+  async (_req: Request, res: Response) => {
+    logger.debug("Admin endpoint accessed");
+
     res.json({
       success: true,
       message: "Admin paneliga xush kelibsiz.",

@@ -1,6 +1,9 @@
 export interface PaginationQuery {
   page?: string;
   limit?: string;
+  search?: string;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 export const getPagination = (

@@ -68,11 +68,11 @@ export const checkCourseCompletion = async (
   }
 
   // 5. Completion yaratish
-const completion =
+
   await completionRepository.createCompletion(
-    userId,
-    courseId
-  );
+  userId,
+  courseId
+);
 
 const {
   generateCertificate,

@@ -9,13 +9,20 @@ export const createCourse = (data: CreateCourseInput) => {
 };
 export const findAllPublishedCourses = () => {
   return prisma.course.findMany({
-    where: {
-      isPublished: true,
+  where: {
+    isPublished: true,
+  },
+  include: {
+    reviews: {
+      select: {
+        rating: true,
+      },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+});
 };
 export const findCourseBySlug = (slug: string) => {
   return prisma.course.findUnique({
@@ -39,6 +46,41 @@ export const deleteCourse = (id: string) => {
   return prisma.course.delete({
     where: {
       id,
+    },
+  });
+};
+
+export const findCourseForPublish = (
+  courseId: string
+) => {
+  return prisma.course.findUnique({
+    where: {
+      id: courseId,
+    },
+    include: {
+      lessons: {
+        include: {
+          quiz: {
+            include: {
+              questions: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const updatePublishStatus = (
+  courseId: string,
+  isPublished: boolean
+) => {
+  return prisma.course.update({
+    where: {
+      id: courseId,
+    },
+    data: {
+      isPublished,
     },
   });
 };

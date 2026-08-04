@@ -1,25 +1,29 @@
 import type { NextFunction, Request, Response } from "express";
 import type { UserRole } from "../generated/prisma/enums";
-import { verifyAccessToken } from "../lib/jwt";
-import { AppError } from "../utils/AppError";
+import { verifyAccessToken } from "../lib/jwt.js";
+import { logger } from "../lib/logger.js";
+import { AppError } from "../utils/AppError.js";
 
 export const authMiddleware = (
   req: Request,
   _res: Response,
   next: NextFunction
 ) => {
-  console.log("1. Middleware boshlandi");
+  logger.info("Auth middleware started");
 
   const authHeader = req.headers.authorization;
-  console.log("2. Header:", authHeader);
+
+  logger.debug({
+    authorization: authHeader,
+  });
 
   if (!authHeader?.startsWith("Bearer ")) {
-    console.log("3. Header topilmadi");
+    logger.warn("Authorization header missing");
+
     throw new AppError("Token topilmadi.", 401);
   }
 
   const token = authHeader.split(" ")[1];
-  console.log("4. Token:", token);
 
   try {
     const payload = verifyAccessToken(token) as {
@@ -28,7 +32,10 @@ export const authMiddleware = (
       role: UserRole;
     };
 
-    console.log("5. Payload:", payload);
+    logger.debug({
+      userId: payload.userId,
+      role: payload.role,
+    });
 
     req.user = {
       userId: payload.userId,
@@ -36,11 +43,13 @@ export const authMiddleware = (
       role: payload.role,
     };
 
-    console.log("6. next() chaqirilyapti");
-
     next();
-  } catch (err) {
-    console.error("JWT ERROR:", err);
-    throw new AppError("Token noto'g'ri yoki eskirgan.", 401);
+  } catch (error) {
+    logger.error(error);
+
+    throw new AppError(
+      "Token noto'g'ri yoki eskirgan.",
+      401
+    );
   }
 };

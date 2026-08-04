@@ -1,10 +1,13 @@
 import * as studentRepository from "../repositories/student.repository.js";
 import { AppError } from "../utils/AppError.js";
 
-import { getPagination } from "../utils/pagination.js";
+import {
+  getPagination,
+  type PaginationQuery,
+} from "../utils/pagination.js";
 
 export const getStudents = async (
-  query: any
+  query: PaginationQuery
 ) => {
 
   const {

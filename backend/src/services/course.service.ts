@@ -3,6 +3,7 @@ import { AppError } from "../utils/AppError.js";
 import * as courseRepository from "../repositories/course.repository.js";
 import type { CreateCourseInput } from "../validators/course.validator.js";
 import type { Prisma } from "../generated/prisma/client";
+import type { PublishCourseInput } from "../validators/course.validator.js";
 
 export const getCourses = async () => {
   return prisma.course.findMany({
@@ -58,4 +59,77 @@ export const deleteCourse = async (id: string) => {
   }
 
   await courseRepository.deleteCourse(id);
+};
+
+
+export const publishCourse = async (
+  courseId: string,
+  data: PublishCourseInput
+) => {
+
+  const course =
+    await courseRepository.findCourseForPublish(
+      courseId
+    );
+
+  if (!course) {
+    throw new AppError(
+      "Kurs topilmadi.",
+      404
+    );
+  }
+
+  // Unpublish qilishga doimo ruxsat
+  if (!data.isPublished) {
+    return courseRepository.updatePublishStatus(
+      courseId,
+      false
+    );
+  }
+
+  if (course.lessons.length === 0) {
+    throw new AppError(
+      "Kursda kamida bitta dars bo'lishi kerak.",
+      400
+    );
+  }
+
+  // Har bir darsda video bo'lishi kerak
+for (const lesson of course.lessons) {
+  if (!lesson.videoUrl) {
+    throw new AppError(
+      `"${lesson.title}" darsida video mavjud emas.`,
+      400
+    );
+  }
+}
+
+// Kursdagi quizlarni ajratib olamiz
+const quizzes = course.lessons
+  .map((lesson) => lesson.quiz)
+  .filter((quiz) => quiz !== null);
+
+// Kamida bitta quiz bo'lishi kerak
+if (quizzes.length === 0) {
+  throw new AppError(
+    "Kursda kamida bitta quiz bo'lishi kerak.",
+    400
+  );
+}
+
+// Har bir quizda kamida bitta savol bo'lishi kerak
+for (const quiz of quizzes) {
+  if (quiz.questions.length === 0) {
+    throw new AppError(
+      "Quizda kamida bitta savol bo'lishi kerak.",
+      400
+    );
+  }
+}
+
+  return courseRepository.updatePublishStatus(
+    courseId,
+    true
+  );
+
 };

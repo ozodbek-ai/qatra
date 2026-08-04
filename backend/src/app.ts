@@ -1,6 +1,9 @@
 import express from "express";
 
 import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.routes";
 
 import courseRoutes from "./routes/course.routes.js";
@@ -20,12 +23,58 @@ import searchRoutes from "./routes/search.routes.js";
 import completionRoutes from "./routes/course-completion.routes.js";
 import certificateRoutes
 from "./routes/certificate.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import reviewRoutes from "./routes/review.routes.js";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.js";
+import pinoHttp from "pino-http";
+import { logger } from "./lib/logger.js";
+
 
 
 
 const app = express();
+
+// Security headers
+app.use(helmet());
+
+// Response compression
+app.use(compression());
+
+// CORS
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3001",
+    ],
+    credentials: true,
+  })
+);
+
+// Rate limiting
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      message:
+        "Juda ko'p so'rov yuborildi. Keyinroq urinib ko'ring.",
+    },
+  })
+);
+
+app.use(
+  pinoHttp({
+    logger,
+  })
+);
+
+// JSON parser
 app.use(express.json());
-app.use(cors());
 
 app.get("/", (req, res) => {
   res.json({
@@ -34,11 +83,13 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/health", (req, res) => {
+app.get("/health", (_, res) => {
   res.status(200).json({
     status: "OK",
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    version: "1.0.0",
   });
 });
 
@@ -72,6 +123,19 @@ app.use(
 app.use(
   "/api/v1/certificates",
   certificateRoutes
+);
+app.use(
+  "/api/v1/admin/users",
+  userRoutes
+);
+app.use(
+  "/api/v1/reviews",
+  reviewRoutes
+);
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
 );
 
 // ❗ Error middleware eng oxirida bo'lishi kerak

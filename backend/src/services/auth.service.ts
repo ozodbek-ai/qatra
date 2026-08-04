@@ -1,26 +1,48 @@
-import { AppError } from "../utils/AppError";
-import { hashPassword } from "../lib/bcrypt";
+import { comparePassword, hashPassword } from "../lib/bcrypt.js";
+import { generateAccessToken } from "../lib/jwt.js";
 import {
   createUser,
   findUserByEmail,
-} from "../repositories/auth.repository";
-import { comparePassword } from "../lib/bcrypt";
-import { generateAccessToken } from "../lib/jwt";
-import type { LoginInput } from "../validators/auth.validator";
-import type { RegisterInput } from "../validators/auth.validator";
+} from "../repositories/auth.repository.js";
+import { AppError } from "../utils/AppError.js";
+import { logger } from "../lib/logger.js";
 
-export const register = async (data: RegisterInput) => {
-  const existingUser = await findUserByEmail(data.email);
+import type {
+  LoginInput,
+  RegisterInput,
+} from "../validators/auth.validator.js";
+
+export const register = async (
+  data: RegisterInput
+) => {
+  const existingUser =
+    await findUserByEmail(data.email);
 
   if (existingUser) {
-    throw new AppError("Bu email allaqachon ro'yxatdan o'tgan.", 409);
+    logger.warn({
+      message: "Registration failed",
+      email: data.email,
+      reason: "Email already exists",
+    });
+
+    throw new AppError(
+      "Bu email allaqachon ro'yxatdan o'tgan.",
+      409
+    );
   }
 
-  const hashedPassword = await hashPassword(data.password);
+  const hashedPassword =
+    await hashPassword(data.password);
 
   const user = await createUser({
     ...data,
     password: hashedPassword,
+  });
+
+  logger.info({
+    message: "User registered",
+    userId: user.id,
+    email: user.email,
   });
 
   return {
@@ -31,26 +53,55 @@ export const register = async (data: RegisterInput) => {
     createdAt: user.createdAt,
   };
 };
-export const login = async (data: LoginInput) => {
-  const user = await findUserByEmail(data.email);
+
+export const login = async (
+  data: LoginInput
+) => {
+  const user =
+    await findUserByEmail(data.email);
 
   if (!user) {
-    throw new AppError("Email yoki parol noto'g'ri.", 401);
+    logger.warn({
+      message: "Login failed",
+      email: data.email,
+      reason: "User not found",
+    });
+
+    throw new AppError(
+      "Email yoki parol noto'g'ri.",
+      401
+    );
   }
 
-  const isPasswordValid = await comparePassword(
-    data.password,
-    user.password
-  );
+  const isPasswordValid =
+    await comparePassword(
+      data.password,
+      user.password
+    );
 
   if (!isPasswordValid) {
-    throw new AppError("Email yoki parol noto'g'ri.", 401);
+    logger.warn({
+      message: "Login failed",
+      userId: user.id,
+      reason: "Wrong password",
+    });
+
+    throw new AppError(
+      "Email yoki parol noto'g'ri.",
+      401
+    );
   }
 
-  const accessToken = generateAccessToken({
+  const accessToken =
+    generateAccessToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+  logger.info({
+    message: "User logged in",
     userId: user.id,
-    email: user.email,
-    role: user.role,
   });
 
   return {

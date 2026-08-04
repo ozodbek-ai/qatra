@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { env } from "../config/env.js";
 
 export interface JwtPayload {
   userId: string;
@@ -7,11 +8,11 @@ export interface JwtPayload {
 }
 
 export const generateAccessToken = (payload: JwtPayload) => {
-  return jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  return jwt.sign(payload, env.JWT_SECRET, {
+    expiresIn: env.JWT_EXPIRES_IN,
   });
 };
 
 export const verifyAccessToken = (token: string) => {
-  return jwt.verify(token, process.env.JWT_SECRET!);
+  return jwt.verify(token, env.JWT_SECRET);
 };

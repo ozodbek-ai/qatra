@@ -6,6 +6,7 @@ import {
   createCourseController,
   updateCourseController,
   deleteCourseController,
+  publishCourseController,
 } from "../controllers/course.controller.js";
 
 import { coursePlayerController } from "../controllers/player.controller.js";
@@ -50,6 +51,12 @@ router.delete(
   authMiddleware,
   authorize("ADMIN"),
   deleteCourseController
+);
+router.patch(
+  "/:id/publish",
+  authMiddleware,
+  authorize("ADMIN"),
+  publishCourseController
 );
 
 export default router;
