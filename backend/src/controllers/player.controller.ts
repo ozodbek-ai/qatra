@@ -8,7 +8,7 @@ asyncHandler(async (req, res) => {
   const data =
     await playerService.getCoursePlayer(
       req.user!.userId,
-      req.params.id
+      req.params.id as string
     );
 
 

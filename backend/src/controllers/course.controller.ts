@@ -42,8 +42,8 @@ export const getAllCoursesController = asyncHandler(
 export const getCourseBySlugController = asyncHandler(
   async (req, res) => {
     const course = await courseService.getCourseBySlug(
-      req.params.slug
-    );
+  req.params.slug as string
+);
 
     res.json({
       success: true,
@@ -55,9 +55,9 @@ export const updateCourseController = asyncHandler(async (req, res) => {
   const data = updateCourseSchema.parse(req.body);
 
   const course = await courseService.updateCourse(
-    req.params.id,
-    data
-  );
+  req.params.id as string,
+  data
+);
 
   res.json({
     success: true,
@@ -67,7 +67,9 @@ export const updateCourseController = asyncHandler(async (req, res) => {
 });
 export const deleteCourseController = asyncHandler(
   async (req, res) => {
-    await courseService.deleteCourse(req.params.id);
+    await courseService.deleteCourse(
+  req.params.id as string
+);
 
     res.json({
       success: true,
@@ -83,9 +85,9 @@ asyncHandler(async (req, res) => {
 
   const course =
     await courseService.publishCourse(
-      req.params.id,
-      body
-    );
+  req.params.id as string,
+  body
+);
 
   res.json({
     success: true,

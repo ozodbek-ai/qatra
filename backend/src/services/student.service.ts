@@ -38,19 +38,14 @@ export const getStudents = async (
 
       id: student.id,
 
-      firstName: student.firstName,
-
-      lastName: student.lastName,
+      fullName: student.fullName,
 
       email: student.email,
 
       joinedAt: student.createdAt,
 
-      enrolledCourses:
-        student.enrollments.length,
-
-      quizAttempts:
-        student.quizAttempts.length,
+      enrolledCourses: 0,
+      quizAttempts: 0,
 
     })),
 

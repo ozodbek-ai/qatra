@@ -26,7 +26,7 @@ export const getCourseReviewsController =
   asyncHandler(async (req, res) => {
     const reviews =
       await reviewService.getCourseReviews(
-        req.params.courseId
+        req.params.courseId as string
       );
 
     res.json({
@@ -42,7 +42,7 @@ export const updateReviewController =
     const review =
       await reviewService.updateReview(
         req.user!.userId,
-        req.params.courseId,
+        req.params.courseId as string,
         body
       );
 
@@ -58,7 +58,7 @@ export const deleteReviewController =
 
     await reviewService.deleteReview(
       req.user!.userId,
-      req.params.courseId
+      req.params.courseId as string
     );
 
     res.json({

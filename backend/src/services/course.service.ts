@@ -2,7 +2,7 @@ import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/AppError.js";
 import * as courseRepository from "../repositories/course.repository.js";
 import type { CreateCourseInput } from "../validators/course.validator.js";
-import type { Prisma } from "../generated/prisma/client";
+import type { Prisma } from "../generated/prisma/client.js";
 import type { PublishCourseInput } from "../validators/course.validator.js";
 
 export const getCourses = async () => {

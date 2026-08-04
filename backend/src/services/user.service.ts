@@ -1,5 +1,6 @@
 import * as userRepository from "../repositories/user.repository.js";
 import { AppError } from "../utils/AppError.js";
+import type { UserQueryInput } from "../validators/user.validator.js";
 import type {
   UpdateRoleInput,
   UpdateStatusInput,

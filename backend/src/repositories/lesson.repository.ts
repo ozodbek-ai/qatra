@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import type { CreateLessonInput } from "../validators/lesson.validator.js";
-import type { Prisma } from "../generated/prisma/client";
+import type { Prisma } from "../generated/prisma/client.js";
 
 export const createLesson = (data: CreateLessonInput) => {
   return prisma.lesson.create({

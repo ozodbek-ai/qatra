@@ -24,7 +24,7 @@ asyncHandler(async (req, res) => {
 
   const data =
     await certificateService.verifyCertificate(
-      req.params.certificateNo
+      req.params.certificateNo as string
     );
 
   res.json({

@@ -5,7 +5,7 @@ import type {
 } from "express";
 
 import { ZodError } from "zod";
-import { Prisma } from "../generated/prisma/client";
+import { Prisma } from "../generated/prisma/client.js";
 import { AppError } from "../utils/AppError.js";
 import { logger } from "../lib/logger.js";
 

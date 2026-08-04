@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import type { UserRole } from "../generated/prisma/enums";
+import type { UserRole } from "../generated/prisma/enums.js";
 import { verifyAccessToken } from "../lib/jwt.js";
 import { logger } from "../lib/logger.js";
 import { AppError } from "../utils/AppError.js";

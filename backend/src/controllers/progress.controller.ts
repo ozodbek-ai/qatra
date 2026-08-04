@@ -6,7 +6,7 @@ export const completeLessonController = asyncHandler(
     const progress =
       await progressService.completeLesson(
         req.user!.userId,
-        req.params.lessonId
+        req.params.lessonId as string
       );
 
     res.json({
@@ -21,7 +21,7 @@ export const getCourseProgressController =
     const progress =
       await progressService.getCourseProgress(
         req.user!.userId,
-        req.params.courseId
+        req.params.courseId as string
       );
 
     res.json({
@@ -34,7 +34,7 @@ export const getCourseProgressController =
     const data =
       await progressService.continueLearning(
         req.user!.userId,
-        req.params.courseId
+        req.params.courseId as string
       );
 
     res.json({

@@ -1,0 +1,11 @@
+import { Router } from "express";
+import { createOptionController, getOptionController, getOptionsByQuestionController, updateOptionController, deleteOptionController, } from "../controllers/option.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { authorize } from "../middlewares/authorize.middleware.js";
+const router = Router();
+router.post("/", authMiddleware, authorize("ADMIN"), createOptionController);
+router.get("/question/:questionId", authMiddleware, authorize("ADMIN"), getOptionsByQuestionController);
+router.get("/:id", authMiddleware, authorize("ADMIN"), getOptionController);
+router.put("/:id", authMiddleware, authorize("ADMIN"), updateOptionController);
+router.delete("/:id", authMiddleware, authorize("ADMIN"), deleteOptionController);
+export default router;

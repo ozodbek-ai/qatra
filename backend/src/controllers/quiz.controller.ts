@@ -30,7 +30,7 @@ export const submitQuizController =
     const result =
       await quizService.submitQuiz(
         req.user!.userId,
-        req.params.quizId,
+        req.params.quizId as string,
         data
       );
 
@@ -46,7 +46,7 @@ export const submitQuizController =
     const result =
       await quizService.getQuizResult(
         req.user!.userId,
-        req.params.quizId
+        req.params.quizId as string
       );
 
     res.json({

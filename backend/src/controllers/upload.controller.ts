@@ -11,7 +11,9 @@ export const uploadVideoController = asyncHandler(
       );
     }
 
-    const result = await uploadVideo(req.file);
+    const result = await uploadVideo(req.file) as {
+      secure_url: string;
+    };
 
     res.json({
       success: true,

@@ -13,7 +13,7 @@ export const createLessonController = asyncHandler(
     if (req.file) {
       const result = await uploadVideo(req.file);
 
-      videoUrl = result.secure_url;
+      videoUrl = (result as { secure_url: string }).secure_url;
     }
 
     const data = createLessonSchema.parse({
@@ -41,7 +41,7 @@ export const getLessonsByCourseController = asyncHandler(
   async (req, res) => {
     const lessons =
       await lessonService.getLessonsByCourse(
-        req.params.courseId
+        req.params.courseId as string
       );
 
     res.json({
@@ -56,7 +56,7 @@ export const getLessonByIdController = asyncHandler(
   async (req, res) => {
     const lesson =
   await lessonService.getLessonById(
-    req.params.id,
+    req.params.id as string,
     req.user?.userId,
     req.user?.role
   );
@@ -76,7 +76,7 @@ export const updateLessonController = asyncHandler(
     if (req.file) {
       const result = await uploadVideo(req.file);
 
-      videoUrl = result.secure_url;
+      videoUrl = (result as { secure_url: string }).secure_url;
     }
 
     const data = updateLessonSchema.parse({
@@ -95,7 +95,7 @@ export const updateLessonController = asyncHandler(
 
     const lesson =
       await lessonService.updateLesson(
-        req.params.id,
+        req.params.id as string,
         data
       );
 
@@ -111,7 +111,7 @@ export const updateLessonController = asyncHandler(
 export const deleteLessonController = asyncHandler(
   async (req, res) => {
     await lessonService.deleteLesson(
-      req.params.id
+      req.params.id as string,
     );
 
     res.json({

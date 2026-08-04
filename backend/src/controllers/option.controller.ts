@@ -27,7 +27,7 @@ asyncHandler(async (req, res) => {
 
   const option =
     await optionService.getOption(
-      req.params.id
+      req.params.id as string
     );
 
   res.json({
@@ -42,7 +42,7 @@ asyncHandler(async (req, res) => {
 
   const options =
     await optionService.getOptionsByQuestion(
-      req.params.questionId
+      req.params.questionId as string
     );
 
   res.json({
@@ -60,7 +60,7 @@ asyncHandler(async (req, res) => {
 
   const option =
     await optionService.updateOption(
-      req.params.id,
+      req.params.id as string,
       data
     );
 
@@ -76,7 +76,7 @@ export const deleteOptionController =
 asyncHandler(async (req, res) => {
 
   await optionService.deleteOption(
-    req.params.id
+    req.params.id as string,
   );
 
   res.json({

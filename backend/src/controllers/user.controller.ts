@@ -1,4 +1,5 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { userQuerySchema } from "../validators/user.validator.js";
 import * as userService from "../services/user.service.js";
 import {
   updateRoleSchema,
@@ -30,7 +31,7 @@ export const getUserController =
 
     const data =
       await userService.getUserById(
-        req.params.id
+        req.params.id as string
       );
 
     res.json({
@@ -48,7 +49,7 @@ export const updateUserRoleController =
 
     const data =
       await userService.updateRole(
-        req.params.id,
+        req.params.id as string,
         body
       );
 
@@ -68,7 +69,7 @@ export const updateUserStatusController =
 
     const data =
       await userService.updateStatus(
-        req.params.id,
+        req.params.id as string,
         body
       );
 

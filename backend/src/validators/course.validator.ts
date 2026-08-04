@@ -25,3 +25,15 @@ export const createCourseSchema = z.object({
     "ADVANCED",
   ]),
 });
+export const updateCourseSchema =
+  createCourseSchema.partial();
+
+export type CreateCourseInput =
+  z.infer<typeof createCourseSchema>;
+
+export const publishCourseSchema = z.object({
+  isPublished: z.boolean(),
+});
+
+export type PublishCourseInput =
+  z.infer<typeof publishCourseSchema>;

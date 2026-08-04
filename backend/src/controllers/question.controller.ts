@@ -25,7 +25,7 @@ asyncHandler(async (req, res) => {
 
   const question =
     await questionService.getQuestion(
-      req.params.id
+      req.params.id as string
     );
 
   res.json({
@@ -40,7 +40,7 @@ asyncHandler(async (req, res) => {
 
   const questions =
     await questionService.getQuestionsByQuiz(
-      req.params.quizId
+      req.params.quizId as string
     );
 
   res.json({
@@ -58,7 +58,7 @@ asyncHandler(async (req, res) => {
 
   const question =
     await questionService.updateQuestion(
-      req.params.id,
+      req.params.id as string,
       data
     );
 
@@ -74,7 +74,7 @@ export const deleteQuestionController =
 asyncHandler(async (req, res) => {
 
   await questionService.deleteQuestion(
-    req.params.id
+    req.params.id as string,
   );
 
   res.json({

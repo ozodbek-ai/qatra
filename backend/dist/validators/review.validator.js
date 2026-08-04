@@ -1,0 +1,26 @@
+import { z } from "zod";
+export const createReviewSchema = z.object({
+    courseId: z.string().cuid(),
+    rating: z
+        .number()
+        .int()
+        .min(1)
+        .max(5),
+    comment: z
+        .string()
+        .trim()
+        .max(1000)
+        .optional(),
+});
+export const updateReviewSchema = z.object({
+    rating: z
+        .number()
+        .int()
+        .min(1)
+        .max(5),
+    comment: z
+        .string()
+        .trim()
+        .max(1000)
+        .optional(),
+});

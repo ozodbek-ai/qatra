@@ -1,5 +1,5 @@
-import { prisma } from "../config/prisma";
-import type { RegisterInput } from "../validators/auth.validator";
+import { prisma } from "../config/prisma.js";
+import type { RegisterInput } from "../validators/auth.validator.js";
 
 export const findUserByEmail = async (email: string) => {
   return prisma.user.findUnique({

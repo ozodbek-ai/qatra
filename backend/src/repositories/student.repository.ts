@@ -15,13 +15,7 @@ export const findStudents = (
         ? {
             OR: [
               {
-                firstName: {
-                  contains: search,
-                  mode: "insensitive",
-                },
-              },
-              {
-                lastName: {
+                fullName: {
                   contains: search,
                   mode: "insensitive",
                 },
@@ -47,8 +41,7 @@ export const findStudents = (
 
     select: {
       id: true,
-      firstName: true,
-      lastName: true,
+      fullName: true,
       email: true,
       createdAt: true,
 
@@ -101,13 +94,7 @@ export const countStudents = (
         ? {
             OR: [
               {
-                firstName: {
-                  contains: search,
-                  mode: "insensitive",
-                },
-              },
-              {
-                lastName: {
+                fullName: {
                   contains: search,
                   mode: "insensitive",
                 },

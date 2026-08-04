@@ -21,7 +21,7 @@ asyncHandler(async (req, res) => {
 
   const student =
     await studentService.getStudentById(
-      req.params.id
+      req.params.id as string
     );
 
   res.json({

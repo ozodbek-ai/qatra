@@ -23,8 +23,6 @@ const envSchema = z.object({
     
   JWT_EXPIRES_IN: z
     .string()
-    .default("7d"),JWT_EXPIRES_IN: z
-    .string()
     .default("7d"),
 
   CLOUDINARY_CLOUD_NAME:
