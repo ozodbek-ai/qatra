@@ -8,6 +8,8 @@ import StudentDashboardPage from "@/pages/student/DashboardPage";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import GuestRoute from "@/components/auth/GuestRoute";
 import MyCoursesPage from "@/pages/student/MyCoursesPage";
+import CourseDetailsPage from "@/pages/public/CourseDetailsPage";
+import PlayerPage from "@/pages/student/PlayerPage";
 
 export const router = createBrowserRouter([
   // Public Routes
@@ -29,6 +31,10 @@ export const router = createBrowserRouter([
     </GuestRoute>
   ),
 },
+{
+  path: "/courses/:slug",
+  element: <CourseDetailsPage />,
+},
 
   // Student Routes
   {
@@ -44,6 +50,14 @@ export const router = createBrowserRouter([
   element: (
     <ProtectedRoute>
       <MyCoursesPage />
+    </ProtectedRoute>
+  ),
+},
+{
+  path: "/player/:courseId",
+  element: (
+    <ProtectedRoute>
+      <PlayerPage />
     </ProtectedRoute>
   ),
 },

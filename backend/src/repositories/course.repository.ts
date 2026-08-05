@@ -27,16 +27,44 @@ export const findCourseBySlug = (
     where: {
       slug,
     },
+
     include: {
       lessons: {
         where: {
           isPublished: true,
         },
+
         orderBy: {
           order: "asc",
         },
+
+        include: {
+          quiz: {
+            select: {
+              id: true,
+            },
+          },
+        },
       },
-      reviews: true,
+
+      reviews: {
+        include: {
+          user: {
+            select: {
+              fullName: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+
+      _count: {
+        select: {
+          lessons: true,
+          enrollments: true,
+          reviews: true,
+        },
+      },
     },
   });
 };

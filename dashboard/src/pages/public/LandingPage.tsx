@@ -4,6 +4,7 @@ import {
   Hero,
   Navbar,
 } from "@/features/landing";
+import CoursesSection from "@/features/courses/components/CoursesSection";
 
 export default function LandingPage() {
   return (
@@ -13,6 +14,8 @@ export default function LandingPage() {
       <Hero />
 
       <Features />
+
+      <CoursesSection />
 
       <Footer />
     </main>
