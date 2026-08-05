@@ -10,6 +10,8 @@ import GuestRoute from "@/components/auth/GuestRoute";
 import MyCoursesPage from "@/pages/student/MyCoursesPage";
 import CourseDetailsPage from "@/pages/public/CourseDetailsPage";
 import PlayerPage from "@/pages/student/PlayerPage";
+import QuizPage from "@/features/quiz/pages/QuizPage";
+import CertificatesPage from "@/features/certificate/pages/CertificatesPage";
 
 export const router = createBrowserRouter([
   // Public Routes
@@ -34,6 +36,22 @@ export const router = createBrowserRouter([
 {
   path: "/courses/:slug",
   element: <CourseDetailsPage />,
+},
+{
+  path: "/quiz/:quizId",
+  element: (
+    <ProtectedRoute>
+      <QuizPage />
+    </ProtectedRoute>
+  ),
+},
+{
+  path: "/certificates",
+  element: (
+    <ProtectedRoute>
+      <CertificatesPage />
+    </ProtectedRoute>
+  ),
 },
 
   // Student Routes
