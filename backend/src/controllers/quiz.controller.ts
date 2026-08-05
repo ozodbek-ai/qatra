@@ -55,3 +55,15 @@ export const submitQuizController =
     });
 
   });
+  export const getQuizController =
+  asyncHandler(async (req, res) => {
+    const quiz =
+      await quizService.getQuiz(
+        req.params.quizId as string
+      );
+
+    res.json({
+      success: true,
+      data: quiz,
+    });
+  });

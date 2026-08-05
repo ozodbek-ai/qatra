@@ -1,21 +1,25 @@
-import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/AppError.js";
+import { logger } from "../lib/logger.js";
 import * as courseRepository from "../repositories/course.repository.js";
-export const getCourses = async () => {
-    return prisma.course.findMany({
-        where: {
-            isPublished: true,
-        },
-        orderBy: {
-            createdAt: "desc",
-        },
-    });
+export const getCourses = () => {
+    return courseRepository.findAllPublishedCourses();
 };
 export const createCourse = async (data) => {
-    return courseRepository.createCourse(data);
-};
-export const getAllCourses = () => {
-    return courseRepository.findAllPublishedCourses();
+    const existingSlug = await courseRepository.findCourseBySlug(data.slug);
+    if (existingSlug) {
+        throw new AppError("Bu slug allaqachon mavjud.", 409);
+    }
+    const existingTitle = await courseRepository.findCourseByTitle(data.title);
+    if (existingTitle) {
+        throw new AppError("Bu nomdagi kurs allaqachon mavjud.", 409);
+    }
+    const course = await courseRepository.createCourse(data);
+    logger.info({
+        message: "Course created",
+        courseId: course.id,
+        title: course.title,
+    });
+    return course;
 };
 export const getCourseBySlug = async (slug) => {
     const course = await courseRepository.findCourseBySlug(slug);
@@ -25,56 +29,59 @@ export const getCourseBySlug = async (slug) => {
     return course;
 };
 export const updateCourse = async (id, data) => {
-    const course = await prisma.course.findUnique({
-        where: { id },
-    });
+    const course = await courseRepository.findCourseById(id);
     if (!course) {
         throw new AppError("Kurs topilmadi.", 404);
     }
-    return courseRepository.updateCourse(id, data);
+    const updatedCourse = await courseRepository.updateCourse(id, data);
+    logger.info({
+        message: "Course updated",
+        courseId: id,
+    });
+    return updatedCourse;
 };
 export const deleteCourse = async (id) => {
-    const course = await prisma.course.findUnique({
-        where: {
-            id,
-        },
-    });
+    const course = await courseRepository.findCourseById(id);
     if (!course) {
         throw new AppError("Kurs topilmadi.", 404);
     }
     await courseRepository.deleteCourse(id);
+    logger.info({
+        message: "Course deleted",
+        courseId: id,
+    });
 };
 export const publishCourse = async (courseId, data) => {
     const course = await courseRepository.findCourseForPublish(courseId);
     if (!course) {
         throw new AppError("Kurs topilmadi.", 404);
     }
-    // Unpublish qilishga doimo ruxsat
     if (!data.isPublished) {
         return courseRepository.updatePublishStatus(courseId, false);
     }
     if (course.lessons.length === 0) {
         throw new AppError("Kursda kamida bitta dars bo'lishi kerak.", 400);
     }
-    // Har bir darsda video bo'lishi kerak
     for (const lesson of course.lessons) {
         if (!lesson.videoUrl) {
             throw new AppError(`"${lesson.title}" darsida video mavjud emas.`, 400);
         }
     }
-    // Kursdagi quizlarni ajratib olamiz
     const quizzes = course.lessons
         .map((lesson) => lesson.quiz)
         .filter((quiz) => quiz !== null);
-    // Kamida bitta quiz bo'lishi kerak
     if (quizzes.length === 0) {
         throw new AppError("Kursda kamida bitta quiz bo'lishi kerak.", 400);
     }
-    // Har bir quizda kamida bitta savol bo'lishi kerak
     for (const quiz of quizzes) {
         if (quiz.questions.length === 0) {
             throw new AppError("Quizda kamida bitta savol bo'lishi kerak.", 400);
         }
     }
-    return courseRepository.updatePublishStatus(courseId, true);
+    const publishedCourse = await courseRepository.updatePublishStatus(courseId, true);
+    logger.info({
+        message: "Course published",
+        courseId,
+    });
+    return publishedCourse;
 };

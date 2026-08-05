@@ -69,3 +69,27 @@ export const findQuizAttempt = (
     },
   });
 };
+export const findQuizById = (
+  quizId: string
+) => {
+  return prisma.quiz.findUnique({
+    where: {
+      id: quizId,
+    },
+    include: {
+      questions: {
+        include: {
+          options: {
+            select: {
+              id: true,
+              text: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+    },
+  });
+};

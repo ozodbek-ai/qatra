@@ -150,3 +150,20 @@ export const getQuizResult = async (
   };
 
 };
+export const getQuiz = async (
+  quizId: string
+) => {
+  const quiz =
+    await quizRepository.findQuizById(
+      quizId
+    );
+
+  if (!quiz) {
+    throw new AppError(
+      "Quiz topilmadi.",
+      404
+    );
+  }
+
+  return quiz;
+};

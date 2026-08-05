@@ -13,7 +13,7 @@ export const completeLesson = async (userId, lessonId) => {
     if (!lesson) {
         throw new AppError("Dars topilmadi.", 404);
     }
-    const enrollment = await enrollmentRepository.hasEnrollment(userId, lesson.courseId);
+    const enrollment = await enrollmentRepository.findEnrollmentByUserAndCourse(userId, lesson.courseId);
     if (!enrollment) {
         throw new AppError("Siz bu kursga yozilmagansiz.", 403);
     }

@@ -4,20 +4,39 @@ export const createLesson = (data) => {
         data,
     });
 };
+export const findLessonById = (id) => {
+    return prisma.lesson.findUnique({
+        where: {
+            id,
+        },
+    });
+};
 export const findLessonsByCourse = (courseId) => {
+    return prisma.lesson.findMany({
+        where: {
+            courseId,
+            isPublished: true,
+        },
+        orderBy: {
+            order: "asc",
+        },
+        include: {
+            quiz: {
+                select: {
+                    id: true,
+                    title: true,
+                },
+            },
+        },
+    });
+};
+export const findLessonsByCourseOrdered = (courseId) => {
     return prisma.lesson.findMany({
         where: {
             courseId,
         },
         orderBy: {
             order: "asc",
-        },
-    });
-};
-export const findLessonById = (id) => {
-    return prisma.lesson.findUnique({
-        where: {
-            id,
         },
     });
 };
@@ -36,13 +55,10 @@ export const deleteLesson = (id) => {
         },
     });
 };
-export const findLessonsByCourseOrdered = (courseId) => {
-    return prisma.lesson.findMany({
+export const countLessonsByCourse = (courseId) => {
+    return prisma.lesson.count({
         where: {
             courseId,
-        },
-        orderBy: {
-            order: "asc",
         },
     });
 };

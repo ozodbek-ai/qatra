@@ -26,3 +26,10 @@ export const getQuizResultController = asyncHandler(async (req, res) => {
         data: result,
     });
 });
+export const getQuizController = asyncHandler(async (req, res) => {
+    const quiz = await quizService.getQuiz(req.params.quizId);
+    res.json({
+        success: true,
+        data: quiz,
+    });
+});

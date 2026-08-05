@@ -3,6 +3,7 @@ import {
   createQuizController,
   submitQuizController,
   getQuizResultController,
+  getQuizController,
 } from "../controllers/quiz.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/authorize.middleware.js";
@@ -27,6 +28,12 @@ router.get(
   authMiddleware,
   authorize("STUDENT", "ADMIN"),
   getQuizResultController
+);
+router.get(
+  "/:quizId",
+  authMiddleware,
+  authorize("STUDENT", "ADMIN"),
+  getQuizController
 );
 
 export default router;

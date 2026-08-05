@@ -109,6 +109,10 @@ export const CourseScalarFieldEnum = {
     description: 'description',
     imageUrl: 'imageUrl',
     price: 'price',
+    category: 'category',
+    duration: 'duration',
+    studentsCount: 'studentsCount',
+    averageRating: 'averageRating',
     level: 'level',
     isPublished: 'isPublished',
     createdAt: 'createdAt',
@@ -122,6 +126,7 @@ export const LessonScalarFieldEnum = {
     duration: 'duration',
     order: 'order',
     isPreview: 'isPreview',
+    isPublished: 'isPublished',
     courseId: 'courseId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -137,7 +142,8 @@ export const LessonProgressScalarFieldEnum = {
     userId: 'userId',
     lessonId: 'lessonId',
     completed: 'completed',
-    completedAt: 'completedAt'
+    completedAt: 'completedAt',
+    lastViewedAt: 'lastViewedAt'
 };
 export const QuizScalarFieldEnum = {
     id: 'id',

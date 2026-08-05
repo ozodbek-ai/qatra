@@ -1,20 +1,29 @@
 import { Router } from "express";
-import { getAllCoursesController, getCourseBySlugController, createCourseController, updateCourseController, deleteCourseController, publishCourseController, } from "../controllers/course.controller.js";
+import { createCourseController, deleteCourseController, getAllCoursesController, getCourseBySlugController, publishCourseController, updateCourseController, } from "../controllers/course.controller.js";
 import { coursePlayerController } from "../controllers/player.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/authorize.middleware.js";
 const router = Router();
-// Barcha kurslar
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 router.get("/", getAllCoursesController);
-// Course Player (/:slug dan OLDIN turishi shart)
+/*
+|--------------------------------------------------------------------------
+| Protected Routes
+|--------------------------------------------------------------------------
+*/
 router.get("/:id/player", authMiddleware, coursePlayerController);
-// Bitta kurs (slug bo'yicha)
 router.get("/:slug", getCourseBySlugController);
-// Kurs yaratish
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
 router.post("/", authMiddleware, authorize("ADMIN"), createCourseController);
-// Kursni yangilash
 router.put("/:id", authMiddleware, authorize("ADMIN"), updateCourseController);
-// Kursni o'chirish
-router.delete("/:id", authMiddleware, authorize("ADMIN"), deleteCourseController);
 router.patch("/:id/publish", authMiddleware, authorize("ADMIN"), publishCourseController);
+router.delete("/:id", authMiddleware, authorize("ADMIN"), deleteCourseController);
 export default router;

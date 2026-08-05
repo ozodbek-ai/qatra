@@ -9,6 +9,7 @@ export const getUserById = (userId) => {
             fullName: true,
             email: true,
             role: true,
+            avatarUrl: true,
         },
     });
 };
@@ -18,7 +19,25 @@ export const getEnrollments = (userId) => {
             userId,
         },
         include: {
-            course: true,
+            course: {
+                include: {
+                    lessons: {
+                        orderBy: {
+                            order: "asc",
+                        },
+                    },
+                    completions: {
+                        where: {
+                            userId,
+                        },
+                    },
+                    reviews: {
+                        select: {
+                            rating: true,
+                        },
+                    },
+                },
+            },
         },
         orderBy: {
             enrolledAt: "desc",
@@ -30,6 +49,30 @@ export const countCompletedLessons = (userId) => {
         where: {
             userId,
             completed: true,
+        },
+    });
+};
+export const countCertificates = (userId) => {
+    return prisma.certificate.count({
+        where: {
+            userId,
+        },
+    });
+};
+export const getLastViewedLesson = (userId) => {
+    return prisma.lessonProgress.findFirst({
+        where: {
+            userId,
+        },
+        include: {
+            lesson: {
+                include: {
+                    course: true,
+                },
+            },
+        },
+        orderBy: {
+            lastViewedAt: "desc",
         },
     });
 };
