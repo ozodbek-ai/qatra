@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "LessonProgress" ADD COLUMN     "lastViewedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

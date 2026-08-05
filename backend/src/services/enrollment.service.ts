@@ -1,19 +1,23 @@
-import { prisma } from "../lib/prisma.js";
-import * as enrollmentRepository from "../repositories/enrollment.repository.js";
 import { AppError } from "../utils/AppError.js";
+import { logger } from "../lib/logger.js";
+
+import * as enrollmentRepository from "../repositories/enrollment.repository.js";
+import * as courseRepository from "../repositories/course.repository.js";
 
 export const enroll = async (
   userId: string,
   courseId: string
 ) => {
-  const course = await prisma.course.findUnique({
-    where: {
-      id: courseId,
-    },
-  });
+  const course =
+    await courseRepository.findPublishedCourseById(
+      courseId
+    );
 
   if (!course) {
-    throw new AppError("Kurs topilmadi.", 404);
+    throw new AppError(
+      "Kurs topilmadi yoki hali nashr qilinmagan.",
+      404
+    );
   }
 
   const enrollment =
@@ -29,12 +33,26 @@ export const enroll = async (
     );
   }
 
-  return enrollmentRepository.createEnrollment(
+  const createdEnrollment =
+    await enrollmentRepository.createEnrollment(
+      userId,
+      courseId
+    );
+
+  logger.info({
+    message: "Student enrolled",
     userId,
-    courseId
-  );
+    courseId,
+    enrollmentId: createdEnrollment.id,
+  });
+
+  return createdEnrollment;
 };
 
-export const getMyCourses = (userId: string) => {
-  return enrollmentRepository.getUserEnrollments(userId);
+export const getMyCourses = async (
+  userId: string
+) => {
+  return enrollmentRepository.getUserEnrollments(
+    userId
+  );
 };

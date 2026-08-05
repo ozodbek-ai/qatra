@@ -1,29 +1,64 @@
 import { prisma } from "../lib/prisma.js";
-import type { CreateLessonInput } from "../validators/lesson.validator.js";
-import type { Prisma } from "../generated/prisma/client.js";
 
-export const createLesson = (data: CreateLessonInput) => {
+import type { Prisma } from "../generated/prisma/client.js";
+import type { CreateLessonInput } from "../validators/lesson.validator.js";
+
+export const createLesson = (
+  data: CreateLessonInput
+) => {
   return prisma.lesson.create({
     data,
   });
 };
-export const findLessonsByCourse = (courseId: string) => {
-  return prisma.lesson.findMany({
-    where: {
-      courseId,
-    },
-    orderBy: {
-      order: "asc",
-    },
-  });
-};
-export const findLessonById = (id: string) => {
+
+export const findLessonById = (
+  id: string
+) => {
   return prisma.lesson.findUnique({
     where: {
       id,
     },
   });
 };
+
+export const findLessonsByCourse = (
+  courseId: string
+) => {
+  return prisma.lesson.findMany({
+    where: {
+      courseId,
+      isPublished: true,
+    },
+
+    orderBy: {
+      order: "asc",
+    },
+
+    include: {
+      quiz: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
+  });
+};
+
+export const findLessonsByCourseOrdered = (
+  courseId: string
+) => {
+  return prisma.lesson.findMany({
+    where: {
+      courseId,
+    },
+
+    orderBy: {
+      order: "asc",
+    },
+  });
+};
+
 export const updateLesson = (
   id: string,
   data: Prisma.LessonUpdateInput
@@ -35,20 +70,23 @@ export const updateLesson = (
     data,
   });
 };
-export const deleteLesson = (id: string) => {
+
+export const deleteLesson = (
+  id: string
+) => {
   return prisma.lesson.delete({
     where: {
       id,
     },
   });
 };
-export const findLessonsByCourseOrdered = (courseId: string) => {
-  return prisma.lesson.findMany({
+
+export const countLessonsByCourse = (
+  courseId: string
+) => {
+  return prisma.lesson.count({
     where: {
       courseId,
-    },
-    orderBy: {
-      order: "asc",
     },
   });
 };

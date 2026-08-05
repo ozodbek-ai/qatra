@@ -57,6 +57,14 @@ model Course {
   imageUrl String?
 
   price Decimal @db.Decimal(10, 2)
+  
+  category String?
+
+  duration Int @default(0)
+
+  studentsCount Int @default(0)
+
+  averageRating Float @default(0)
 
   lessons Lesson[]
 
@@ -72,8 +80,10 @@ model Course {
 
   reviews Review[]
 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@index([title])
 }
 
 model Lesson {
@@ -89,6 +99,8 @@ model Lesson {
   order Int
 
   isPreview Boolean @default(false)
+
+  isPublished Boolean @default(false)
 
   courseId String
 
@@ -125,6 +137,8 @@ model LessonProgress {
   completed Boolean @default(false)
 
   completedAt DateTime?
+
+  lastViewedAt DateTime @default(now()) @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)

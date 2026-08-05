@@ -6,6 +6,22 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Accent */
+
+--color-primary-foreground: #ffffff;
+
+/* Surface */
+
+--color-surface-hover: #1a2437;
+
+/* Borders */
+
+--color-border-light: #4b5563;
+
+/* Focus */
+
+--color-ring: #3b82f6;
+
   /* Brand */
 
   --color-primary: #2563eb;
@@ -124,9 +140,9 @@ body {
   background: var(--color-background);
   color: var(--color-text);
   font-family:
-    Inter,
-    system-ui,
-    sans-serif;
+  "Geist",
+  system-ui,
+  sans-serif;
 }
 
 @theme inline {

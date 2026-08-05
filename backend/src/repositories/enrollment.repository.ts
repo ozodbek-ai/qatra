@@ -1,6 +1,9 @@
 import { prisma } from "../lib/prisma.js";
 
-export const createEnrollment = (userId: string, courseId: string) => {
+export const createEnrollment = (
+  userId: string,
+  courseId: string
+) => {
   return prisma.enrollment.create({
     data: {
       userId,
@@ -23,20 +26,62 @@ export const findEnrollment = (
   });
 };
 
-export const getUserEnrollments = (userId: string) => {
+export const findEnrollmentById = (
+  id: string
+) => {
+  return prisma.enrollment.findUnique({
+    where: {
+      id,
+    },
+  });
+};
+
+export const getUserEnrollments = (
+  userId: string
+) => {
   return prisma.enrollment.findMany({
     where: {
       userId,
     },
+
     include: {
-      course: true,
+      course: {
+        include: {
+          _count: {
+            select: {
+              lessons: true,
+            },
+          },
+
+          reviews: {
+            select: {
+              rating: true,
+            },
+          },
+        },
+      },
     },
+
     orderBy: {
       enrolledAt: "desc",
     },
   });
 };
-export const hasEnrollment = (
+
+export const deleteEnrollment = (
+  id: string
+) => {
+  return prisma.enrollment.delete({
+    where: {
+      id,
+    },
+  });
+};
+
+export const countEnrollments = () => {
+  return prisma.enrollment.count();
+};
+export const findEnrollmentByUserAndCourse = (
   userId: string,
   courseId: string
 ) => {

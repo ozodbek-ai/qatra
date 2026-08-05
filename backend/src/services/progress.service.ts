@@ -19,7 +19,8 @@ export const completeLesson = async (
     throw new AppError("Dars topilmadi.", 404);
   }
 
-  const enrollment = await enrollmentRepository.hasEnrollment(
+  const enrollment =
+  await enrollmentRepository.findEnrollmentByUserAndCourse(
     userId,
     lesson.courseId
   );

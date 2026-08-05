@@ -3,6 +3,14 @@ import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
 
 export default [
+  {
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "coverage/**",
+    ],
+  },
+
   js.configs.recommended,
 
   ...tseslint.configs.recommended,
@@ -14,6 +22,10 @@ export default [
 
     languageOptions: {
       parser: tseslint.parser,
+      globals: {
+        process: "readonly",
+        console: "readonly",
+      },
     },
 
     rules: {

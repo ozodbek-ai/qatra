@@ -1,36 +1,84 @@
 import { prisma } from "../lib/prisma.js";
-import type { CreateCourseInput } from "../validators/course.validator.js";
 import type { Prisma } from "../generated/prisma/client.js";
+import type { CreateCourseInput } from "../validators/course.validator.js";
 
-export const createCourse = (data: CreateCourseInput) => {
+export const createCourse = (
+  data: CreateCourseInput
+) => {
   return prisma.course.create({
     data,
   });
 };
-export const findAllPublishedCourses = () => {
-  return prisma.course.findMany({
-  where: {
-    isPublished: true,
-  },
-  include: {
-    reviews: {
-      select: {
-        rating: true,
-      },
+
+export const findCourseById = (
+  id: string
+) => {
+  return prisma.course.findUnique({
+    where: {
+      id,
     },
-  },
-  orderBy: {
-    createdAt: "desc",
-  },
-});
+  });
 };
-export const findCourseBySlug = (slug: string) => {
+
+export const findCourseBySlug = (
+  slug: string
+) => {
   return prisma.course.findUnique({
     where: {
       slug,
     },
+    include: {
+      lessons: {
+        where: {
+          isPublished: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+      },
+      reviews: true,
+    },
   });
 };
+
+export const findCourseByTitle = (
+  title: string
+) => {
+  return prisma.course.findFirst({
+    where: {
+      title,
+    },
+  });
+};
+
+export const findAllPublishedCourses =
+  () => {
+    return prisma.course.findMany({
+      where: {
+        isPublished: true,
+      },
+
+      include: {
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
+
+        _count: {
+          select: {
+            enrollments: true,
+            lessons: true,
+          },
+        },
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  };
+
 export const updateCourse = (
   id: string,
   data: Prisma.CourseUpdateInput
@@ -42,7 +90,10 @@ export const updateCourse = (
     data,
   });
 };
-export const deleteCourse = (id: string) => {
+
+export const deleteCourse = (
+  id: string
+) => {
   return prisma.course.delete({
     where: {
       id,
@@ -50,26 +101,26 @@ export const deleteCourse = (id: string) => {
   });
 };
 
-export const findCourseForPublish = (
-  courseId: string
-) => {
-  return prisma.course.findUnique({
-    where: {
-      id: courseId,
-    },
-    include: {
-      lessons: {
-        include: {
-          quiz: {
-            include: {
-              questions: true,
+export const findCourseForPublish =
+  (courseId: string) => {
+    return prisma.course.findUnique({
+      where: {
+        id: courseId,
+      },
+
+      include: {
+        lessons: {
+          include: {
+            quiz: {
+              include: {
+                questions: true,
+              },
             },
           },
         },
       },
-    },
-  });
-};
+    });
+  };
 
 export const updatePublishStatus = (
   courseId: string,
@@ -81,6 +132,30 @@ export const updatePublishStatus = (
     },
     data: {
       isPublished,
+    },
+  });
+};
+
+export const countPublishedCourses =
+  () => {
+    return prisma.course.count({
+      where: {
+        isPublished: true,
+      },
+    });
+  };
+
+export const countAllCourses =
+  () => {
+    return prisma.course.count();
+  };
+export const findPublishedCourseById = (
+  id: string
+) => {
+  return prisma.course.findFirst({
+    where: {
+      id,
+      isPublished: true,
     },
   });
 };
