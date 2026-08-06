@@ -1,72 +1,62 @@
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
-
+import DashboardSkeleton from "@/features/dashboard/components/DashboardSkeleton";
 import StatsCard from "@/features/dashboard/components/StatsCard";
 import ContinueLearningCard from "@/features/dashboard/components/ContinueLearningCard";
 import RecentCoursesCard from "@/features/dashboard/components/RecentCoursesCard";
+import { EmptyState } from "@/components/common/empty-state";
+
 
 export default function DashboardPage() {
-  const { data, isLoading, isError } =
-    useDashboard();
+  const { data, isLoading } = useDashboard();
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        Yuklanmoqda...
-      </div>
-    );
-  }
+  return <DashboardSkeleton />;
+}
 
-  if (isError || !data) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-red-500">
-        Dashboard ma'lumotlarini yuklab bo'lmadi.
-      </div>
-    );
-  }
+  if (!data) {
+  return (
+    <EmptyState
+      title="Dashboard mavjud emas"
+      description="Hozircha ko'rsatish uchun ma'lumot topilmadi."
+    />
+  );
+}
 
   return (
-    <main className="min-h-screen bg-slate-100 p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Assalomu alaykum, {data.user.fullName} 👋
-          </h1>
+    <div className="space-y-8 p-8">
+      <h1 className="text-3xl font-bold">
+        Xush kelibsiz, {data.user.fullName}
+      </h1>
 
-          <p className="mt-2 text-slate-500">
-            Dashboard
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <StatsCard
-            title="Kurslar"
-            value={data.stats.enrolledCourses}
-          />
-
-          <StatsCard
-            title="Tugatilgan kurslar"
-            value={data.stats.completedCourses}
-          />
-
-          <StatsCard
-            title="Sertifikatlar"
-            value={data.stats.certificates}
-          />
-
-          <StatsCard
-            title="Progress"
-            value={`${data.stats.averageProgress}%`}
-          />
-        </div>
-
-        <ContinueLearningCard
-          data={data.continueLearning}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <StatsCard
+          title="Kurslar"
+          value={data.stats.enrolledCourses}
         />
 
-        <RecentCoursesCard
-          courses={data.recentCourses}
+        <StatsCard
+          title="Yakunlangan kurslar"
+          value={data.stats.completedCourses}
+        />
+
+        <StatsCard
+          title="Yakunlangan darslar"
+          value={data.stats.completedLessons}
+        />
+
+        <StatsCard
+          title="Sertifikatlar"
+          value={data.stats.certificates}
         />
       </div>
-    </main>
+
+      <ContinueLearningCard
+        data={data.continueLearning}
+      />
+
+      <RecentCoursesCard
+        courses={data.recentCourses}
+      />
+    </div>
   );
 }
