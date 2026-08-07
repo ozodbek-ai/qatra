@@ -4,6 +4,9 @@ import * as courseRepository from "../repositories/course.repository.js";
 export const getCourses = () => {
     return courseRepository.findAllPublishedCourses();
 };
+export const getAdminCourses = () => {
+    return courseRepository.findAllCourses();
+};
 export const createCourse = async (data) => {
     const existingSlug = await courseRepository.findCourseBySlug(data.slug);
     if (existingSlug) {

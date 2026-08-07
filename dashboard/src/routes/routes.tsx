@@ -1,5 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
-
+import CoursesPage from "@/pages/admin/CoursesPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import PlaygroundPage from "@/pages/dev/PlaygroundPage";
 import LandingPage from "@/pages/public/LandingPage";
@@ -12,6 +12,9 @@ import CourseDetailsPage from "@/pages/public/CourseDetailsPage";
 import PlayerPage from "@/pages/student/PlayerPage";
 import QuizPage from "@/features/quiz/pages/QuizPage";
 import CertificatesPage from "@/features/certificate/pages/CertificatesPage";
+import AdminLayout from "@/components/layout/AdminLayout";
+
+
 
 export const router = createBrowserRouter([
   // Public Routes
@@ -81,14 +84,27 @@ export const router = createBrowserRouter([
 },
 
   // Admin Routes
- {
+{
   path: "/admin",
   element: (
     <ProtectedRoute>
-      <AdminDashboardPage />
+      <AdminLayout />
     </ProtectedRoute>
   ),
+  children: [
+    {
+      index: true,
+      element: <AdminDashboardPage />,
+    },
+    {
+      path: "courses",
+      element: <CoursesPage />,
+    },
+    
+  ],
+  
 },
+
 
   // 404
   {

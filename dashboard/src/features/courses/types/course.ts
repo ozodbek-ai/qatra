@@ -44,6 +44,8 @@ export interface Course {
 
   averageRating: number;
 
+  isPublished: boolean;
+
   lessons: Lesson[];
 
   reviews: Review[];

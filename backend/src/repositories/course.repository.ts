@@ -107,6 +107,30 @@ export const findAllPublishedCourses =
     });
   };
 
+export const findAllCourses = () => {
+  return prisma.course.findMany({
+    include: {
+      reviews: {
+        select: {
+          rating: true,
+        },
+      },
+
+      _count: {
+        select: {
+          enrollments: true,
+          lessons: true,
+          reviews: true,
+        },
+      },
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
+
 export const updateCourse = (
   id: string,
   data: Prisma.CourseUpdateInput

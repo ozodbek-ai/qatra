@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@/lib/axios";
 import type { Quiz } from "../types/quiz";
 
 export const getQuiz = async (

@@ -3,7 +3,7 @@ export interface DashboardResponse {
     id: string;
     fullName: string;
     email: string;
-    avatarUrl?: string | null;
+    role: string;
   };
 
   stats: {
@@ -25,7 +25,7 @@ export interface DashboardResponse {
     id: string;
     title: string;
     slug: string;
-    imageUrl?: string | null;
+    imageUrl: string | null;
     totalLessons: number;
   }[];
 }

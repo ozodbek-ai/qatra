@@ -7,6 +7,7 @@ import {
   getCourseBySlugController,
   publishCourseController,
   updateCourseController,
+  getAdminCoursesController
 } from "../controllers/course.controller.js";
 
 import { coursePlayerController } from "../controllers/player.controller.js";
@@ -71,6 +72,13 @@ router.delete(
   authMiddleware,
   authorize("ADMIN"),
   deleteCourseController
+);
+
+router.get(
+  "/admin/list",
+  authMiddleware,
+  authorize("ADMIN"),
+  getAdminCoursesController
 );
 
 export default router;

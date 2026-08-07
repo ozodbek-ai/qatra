@@ -74,3 +74,10 @@ export const publishCourseController = asyncHandler(async (req, res) => {
         data: course,
     });
 });
+export const getAdminCoursesController = asyncHandler(async (_req, res) => {
+    const courses = await courseService.getAdminCourses();
+    res.json({
+        success: true,
+        data: courses,
+    });
+});

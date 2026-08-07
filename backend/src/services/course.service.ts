@@ -13,6 +13,9 @@ import type { Prisma } from "../generated/prisma/client.js";
 export const getCourses = () => {
   return courseRepository.findAllPublishedCourses();
 };
+export const getAdminCourses = () => {
+  return courseRepository.findAllCourses();
+};
 
 export const createCourse = async (
   data: CreateCourseInput
