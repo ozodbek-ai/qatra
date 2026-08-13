@@ -5,6 +5,11 @@ export const createQuestionSchema = z.object({
 
   question: z.string().min(3),
 
+  type: z.enum([
+    "SINGLE",
+    "MULTIPLE",
+  ]),
+
   options: z
     .array(
       z.object({
@@ -15,12 +20,14 @@ export const createQuestionSchema = z.object({
     .min(2)
     .max(6),
 });
-export const updateQuestionSchema = z.object({
-  question: z.string().min(3),
-});
 
-export type CreateQuestionInput = z.infer<
-  typeof createQuestionSchema
->;
+export const updateQuestionSchema =
+  z.object({
+    question: z.string().min(3),
+  });
+
+export type CreateQuestionInput =
+  z.infer<typeof createQuestionSchema>;
+
 export type UpdateQuestionInput =
   z.infer<typeof updateQuestionSchema>;

@@ -1,9 +1,12 @@
 import { Router } from "express";
-import { completeLessonController,
+import {
+  completeLessonController,
   getCourseProgressController,
-  continueLearningController
- } from "../controllers/progress.controller.js";
+  continueLearningController,
+  getAllProgressController,
+} from "../controllers/progress.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { authorize } from "../middlewares/authorize.middleware.js";
 
 const router = Router();
 
@@ -21,6 +24,12 @@ router.get(
   "/continue/:courseId",
   authMiddleware,
   continueLearningController
+);
+router.get(
+  "/admin",
+  authMiddleware,
+  authorize("ADMIN"),
+  getAllProgressController
 );
 
 export default router;

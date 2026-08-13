@@ -69,3 +69,27 @@ export const deleteLessonController = asyncHandler(async (req, res) => {
         message: "Dars muvaffaqiyatli o'chirildi.",
     });
 });
+export const getAdminLessonsController = asyncHandler(async (req, res) => {
+    const lessons = await lessonService.getAdminLessonsByCourse(req.params.courseId);
+    res.json({
+        success: true,
+        data: lessons,
+    });
+});
+export const publishLessonController = asyncHandler(async (req, res) => {
+    const lesson = await lessonService.publishLesson(req.params.id, req.body.isPublished);
+    res.json({
+        success: true,
+        message: lesson.isPublished
+            ? "Dars muvaffaqiyatli nashr qilindi."
+            : "Dars draft holatiga qaytarildi.",
+        data: lesson,
+    });
+});
+export const getAllAdminLessonsController = asyncHandler(async (req, res) => {
+    const lessons = await lessonService.getAllAdminLessons();
+    res.json({
+        success: true,
+        data: lessons,
+    });
+});

@@ -3,11 +3,22 @@ export const findCourseWithLessons = (courseId) => {
     return prisma.course.findUnique({
         where: {
             id: courseId,
+            isPublished: true,
         },
         include: {
             lessons: {
+                where: {
+                    isPublished: true,
+                },
                 orderBy: {
                     order: "asc",
+                },
+                include: {
+                    quiz: {
+                        select: {
+                            id: true,
+                        },
+                    },
                 },
             },
         },

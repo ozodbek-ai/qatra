@@ -50,7 +50,8 @@ export const ModelName = {
     QuizAttempt: 'QuizAttempt',
     CourseCompletion: 'CourseCompletion',
     Certificate: 'Certificate',
-    Review: 'Review'
+    Review: 'Review',
+    SiteSettings: 'SiteSettings'
 };
 /*
  * Enums
@@ -130,6 +131,7 @@ export const QuestionScalarFieldEnum = {
     id: 'id',
     quizId: 'quizId',
     question: 'question',
+    type: 'type',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };
@@ -170,6 +172,16 @@ export const ReviewScalarFieldEnum = {
     courseId: 'courseId',
     rating: 'rating',
     comment: 'comment',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+export const SiteSettingsScalarFieldEnum = {
+    id: 'id',
+    platformName: 'platformName',
+    description: 'description',
+    logoUrl: 'logoUrl',
+    supportEmail: 'supportEmail',
+    defaultQuizPassPercentage: 'defaultQuizPassPercentage',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

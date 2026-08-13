@@ -23,3 +23,10 @@ export const myCoursesController = asyncHandler(async (req, res) => {
         data: courses,
     });
 });
+export const getAllEnrollmentsController = asyncHandler(async (req, res) => {
+    const data = await enrollmentService.getAllEnrollments(req.query);
+    res.status(200).json({
+        success: true,
+        data,
+    });
+});

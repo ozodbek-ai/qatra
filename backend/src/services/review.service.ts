@@ -120,3 +120,6 @@ export const getCourseReviews = (
     courseId
   );
 };
+export const getAllReviews = () => {
+  return reviewRepository.getAllReviews();
+};

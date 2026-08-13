@@ -1,15 +1,23 @@
 import type { Request, Response } from "express";
 
 import { logger } from "../lib/logger.js";
+
 import {
   login,
   register,
 } from "../services/auth.service.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+
 import {
   loginSchema,
   registerSchema,
 } from "../validators/auth.validator.js";
+
+import { prisma } from "../lib/prisma.js";
+
+import { AppError } from "../utils/AppError.js";
+
+import { asyncHandler } from "../utils/asyncHandler.js";
+
 
 export const registerController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -31,6 +39,7 @@ export const registerController = asyncHandler(
   }
 );
 
+
 export const loginController = asyncHandler(
   async (req: Request, res: Response) => {
     const data = loginSchema.parse(req.body);
@@ -50,14 +59,45 @@ export const loginController = asyncHandler(
   }
 );
 
+
 export const meController = asyncHandler(
   async (req: Request, res: Response) => {
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user!.userId,
+      },
+
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+        avatarUrl: true,
+      },
+    });
+
+    if (!user) {
+      throw new AppError(
+        "Foydalanuvchi topilmadi.",
+        404
+      );
+    }
+
     res.json({
       success: true,
-      data: req.user,
+
+      data: {
+        userId: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+      },
     });
   }
 );
+
 
 export const adminController = asyncHandler(
   async (_req: Request, res: Response) => {

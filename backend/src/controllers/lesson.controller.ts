@@ -122,3 +122,44 @@ export const deleteLessonController = asyncHandler(
     });
   }
 );
+
+export const getAdminLessonsController =
+  asyncHandler(async (req, res) => {
+    const lessons =
+      await lessonService.getAdminLessonsByCourse(
+        req.params.courseId as string
+      );
+
+    res.json({
+      success: true,
+      data: lessons,
+    });
+  });
+  export const publishLessonController = asyncHandler(
+  async (req, res) => {
+    const lesson =
+      await lessonService.publishLesson(
+        req.params.id as string,
+        req.body.isPublished
+      );
+
+    res.json({
+      success: true,
+      message: lesson.isPublished
+        ? "Dars muvaffaqiyatli nashr qilindi."
+        : "Dars draft holatiga qaytarildi.",
+      data: lesson,
+    });
+  }
+);
+
+export const getAllAdminLessonsController =
+  asyncHandler(async (req, res) => {
+    const lessons =
+      await lessonService.getAllAdminLessons();
+
+    res.json({
+      success: true,
+      data: lessons,
+    });
+  });

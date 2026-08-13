@@ -4,6 +4,7 @@ export const createQuestion = (data) => {
         data: {
             quizId: data.quizId,
             question: data.question,
+            type: data.type,
             options: {
                 create: data.options,
             },

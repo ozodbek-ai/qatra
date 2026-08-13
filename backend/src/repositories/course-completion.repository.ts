@@ -55,17 +55,24 @@ export const getCourseQuizzes = (
     },
   });
 };
-export const getPassedQuizCount = (
+export const getPassedQuizCount = async (
   userId: string,
   quizIds: string[]
 ) => {
-  return prisma.quizAttempt.count({
-    where: {
-      userId,
-      quizId: {
-        in: quizIds,
+  const passedQuizzes =
+    await prisma.quizAttempt.findMany({
+      where: {
+        userId,
+        quizId: {
+          in: quizIds,
+        },
+        passed: true,
       },
-      passed: true,
-    },
-  });
+      select: {
+        quizId: true,
+      },
+      distinct: ["quizId"],
+    });
+
+  return passedQuizzes.length;
 };

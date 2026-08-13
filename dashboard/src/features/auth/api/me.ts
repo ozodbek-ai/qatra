@@ -3,8 +3,10 @@ import type { ApiResponse } from "@/types/api";
 
 interface MeResponse {
   userId: string;
+  fullName: string;
   email: string;
-  role: string;
+  role: "ADMIN" | "STUDENT";
+  avatarUrl: string | null;
 }
 
 export async function me() {

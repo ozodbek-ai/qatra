@@ -67,3 +67,13 @@ export const deleteReviewController =
     });
 
   });
+  export const getAllReviewsController =
+  asyncHandler(async (req, res) => {
+    const reviews =
+      await reviewService.getAllReviews();
+
+    res.json({
+      success: true,
+      data: reviews,
+    });
+  });

@@ -21,16 +21,27 @@ export const createQuestion = async (
   }
 
   const correctAnswers =
-    data.options.filter(
-      (option) => option.isCorrect
-    );
+  data.options.filter(
+    (option) => option.isCorrect
+  );
 
+if (data.type === "SINGLE") {
   if (correctAnswers.length !== 1) {
     throw new AppError(
-      "Faqat bitta to'g'ri javob bo'lishi kerak.",
+      "Bitta javobli savolda aynan bitta to'g'ri javob bo'lishi kerak.",
       400
     );
   }
+}
+
+if (data.type === "MULTIPLE") {
+  if (correctAnswers.length < 2) {
+    throw new AppError(
+      "Ko'p javobli savolda kamida ikkita to'g'ri javob bo'lishi kerak.",
+      400
+    );
+  }
+}
 
   return questionRepository.createQuestion(data);
 };

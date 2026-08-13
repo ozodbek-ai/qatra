@@ -6,6 +6,9 @@ import {
   getLessonByIdController,
   updateLessonController,
   deleteLessonController,
+  getAdminLessonsController,
+  publishLessonController,
+  getAllAdminLessonsController
 } from "../controllers/lesson.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -64,6 +67,24 @@ router.delete(
   authMiddleware,
   authorize("ADMIN"),
   deleteLessonController
+);
+router.get(
+  "/admin/all",
+  authMiddleware,
+  authorize("ADMIN"),
+  getAllAdminLessonsController
+);
+router.get(
+  "/admin/course/:courseId",
+  authMiddleware,
+  authorize("ADMIN"),
+  getAdminLessonsController
+);
+router.patch(
+  "/:id/publish",
+  authMiddleware,
+  authorize("ADMIN"),
+  publishLessonController
 );
 
 export default router;

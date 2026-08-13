@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createLessonController, getLessonsByCourseController, getLessonByIdController, updateLessonController, deleteLessonController, } from "../controllers/lesson.controller.js";
+import { createLessonController, getLessonsByCourseController, getLessonByIdController, updateLessonController, deleteLessonController, getAdminLessonsController, publishLessonController, getAllAdminLessonsController } from "../controllers/lesson.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/authorize.middleware.js";
 import { upload } from "../middlewares/upload.middleware.js";
@@ -24,4 +24,7 @@ router.get("/:id", authMiddleware, getLessonByIdController);
 router.post("/", authMiddleware, authorize("ADMIN"), upload.single("video"), createLessonController);
 router.put("/:id", authMiddleware, authorize("ADMIN"), upload.single("video"), updateLessonController);
 router.delete("/:id", authMiddleware, authorize("ADMIN"), deleteLessonController);
+router.get("/admin/all", authMiddleware, authorize("ADMIN"), getAllAdminLessonsController);
+router.get("/admin/course/:courseId", authMiddleware, authorize("ADMIN"), getAdminLessonsController);
+router.patch("/:id/publish", authMiddleware, authorize("ADMIN"), publishLessonController);
 export default router;

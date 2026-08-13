@@ -14,6 +14,7 @@ export const authMiddleware = (req, _res, next) => {
     const token = authHeader.split(" ")[1];
     try {
         const payload = verifyAccessToken(token);
+        console.log("JWT Payload:", payload);
         logger.debug({
             userId: payload.userId,
             role: payload.role,

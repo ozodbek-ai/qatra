@@ -7,7 +7,7 @@ import {
   getCourseBySlugController,
   publishCourseController,
   updateCourseController,
-  getAdminCoursesController
+  getAdminCoursesController,
 } from "../controllers/course.controller.js";
 
 import { coursePlayerController } from "../controllers/player.controller.js";
@@ -18,19 +18,28 @@ import { authorize } from "../middlewares/authorize.middleware.js";
 const router = Router();
 
 /*
-|--------------------------------------------------------------------------
-| Public Routes
-|--------------------------------------------------------------------------
-*/
+ * Public Routes
+ */
 
 router.get("/", getAllCoursesController);
 
+/*
+ * Admin Routes
+ *
+ * MUHIM:
+ * /admin/list route /:slug dan OLDIN turishi kerak.
+ */
+
+router.get(
+  "/admin/list",
+  authMiddleware,
+  authorize("ADMIN"),
+  getAdminCoursesController
+);
 
 /*
-|--------------------------------------------------------------------------
-| Protected Routes
-|--------------------------------------------------------------------------
-*/
+ * Protected Routes
+ */
 
 router.get(
   "/:id/player",
@@ -38,13 +47,18 @@ router.get(
   coursePlayerController
 );
 
-router.get("/:slug", getCourseBySlugController);
+/*
+ * Public course detail
+ */
+
+router.get(
+  "/:slug",
+  getCourseBySlugController
+);
 
 /*
-|--------------------------------------------------------------------------
-| Admin Routes
-|--------------------------------------------------------------------------
-*/
+ * Admin Course Management
+ */
 
 router.post(
   "/",
@@ -72,13 +86,6 @@ router.delete(
   authMiddleware,
   authorize("ADMIN"),
   deleteCourseController
-);
-
-router.get(
-  "/admin/list",
-  authMiddleware,
-  authorize("ADMIN"),
-  getAdminCoursesController
 );
 
 export default router;

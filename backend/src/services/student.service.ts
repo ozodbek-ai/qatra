@@ -9,7 +9,6 @@ import {
 export const getStudents = async (
   query: PaginationQuery
 ) => {
-
   const {
     page,
     limit,
@@ -33,45 +32,37 @@ export const getStudents = async (
     );
 
   return {
-
-    items: students.map(student => ({
-
+    items: students.map((student) => ({
       id: student.id,
-
       fullName: student.fullName,
-
       email: student.email,
-
       joinedAt: student.createdAt,
 
-      enrolledCourses: 0,
-      quizAttempts: 0,
+      enrolledCourses:
+        student.enrollments.length,
 
+      quizAttempts:
+        student.quizAttempts.length,
     })),
 
     pagination: {
-
       page,
-
       limit,
-
       total,
-
       totalPages:
         Math.ceil(total / limit),
-
     },
-
   };
-
 };
+
 
 export const getStudentById = async (
   id: string
 ) => {
-
   const student =
-    await studentRepository.findStudentById(id);
+    await studentRepository.findStudentById(
+      id
+    );
 
   if (!student) {
     throw new AppError(
@@ -80,6 +71,86 @@ export const getStudentById = async (
     );
   }
 
-  return student;
+  if (student.role !== "STUDENT") {
+    throw new AppError(
+      "Bu foydalanuvchi student emas.",
+      400
+    );
+  }
 
+  return {
+    id: student.id,
+    fullName: student.fullName,
+    email: student.email,
+    role: student.role,
+    isActive: student.isActive,
+    createdAt: student.createdAt,
+    lastLoginAt: student.lastLoginAt,
+
+    enrollments:
+      student.enrollments.map(
+        (enrollment) => ({
+          id: enrollment.id,
+          enrolledAt:
+            enrollment.enrolledAt,
+
+          course: {
+            id: enrollment.course.id,
+            title:
+              enrollment.course.title,
+            slug:
+              enrollment.course.slug,
+            imageUrl:
+              enrollment.course.imageUrl,
+            isPublished:
+              enrollment.course.isPublished,
+          },
+        })
+      ),
+
+    lessonProgress:
+      student.lessonProgress.map(
+        (progress) => ({
+          id: progress.id,
+          lessonId:
+            progress.lessonId,
+          completed:
+            progress.completed,
+          completedAt:
+            progress.completedAt,
+          lastViewedAt:
+            progress.lastViewedAt,
+
+          lesson: {
+            id: progress.lesson.id,
+            title:
+              progress.lesson.title,
+            courseId:
+              progress.lesson.courseId,
+          },
+        })
+      ),
+
+    quizAttempts:
+      student.quizAttempts.map(
+        (attempt) => ({
+          id: attempt.id,
+          quizId: attempt.quizId,
+          score: attempt.score,
+          total: attempt.total,
+          percentage:
+            attempt.percentage,
+          passed:
+            attempt.passed,
+          createdAt:
+            attempt.createdAt,
+
+          quiz: {
+            id: attempt.quiz.id,
+            title:
+              attempt.quiz.title,
+          },
+        })
+      ),
+  };
 };

@@ -91,3 +91,80 @@ export const updateUserStatus = (userId, isActive) => {
         },
     });
 };
+export const getMyProfile = (userId) => {
+    return prisma.user.findUnique({
+        where: {
+            id: userId,
+        },
+        select: {
+            id: true,
+            fullName: true,
+            email: true,
+            role: true,
+            avatarUrl: true,
+            emailVerified: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
+};
+export const updateMyProfile = (userId, data) => {
+    return prisma.user.update({
+        where: {
+            id: userId,
+        },
+        data,
+        select: {
+            id: true,
+            fullName: true,
+            email: true,
+            role: true,
+            avatarUrl: true,
+            emailVerified: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
+};
+export const getUserPassword = (userId) => {
+    return prisma.user.findUnique({
+        where: {
+            id: userId,
+        },
+        select: {
+            id: true,
+            password: true,
+        },
+    });
+};
+export const updateUserPassword = (userId, password) => {
+    return prisma.user.update({
+        where: {
+            id: userId,
+        },
+        data: {
+            password,
+        },
+    });
+};
+export const findUserByIdForPassword = (userId) => {
+    return prisma.user.findUnique({
+        where: {
+            id: userId,
+        },
+        select: {
+            id: true,
+            password: true,
+        },
+    });
+};
+export const updatePassword = (userId, password) => {
+    return prisma.user.update({
+        where: {
+            id: userId,
+        },
+        data: {
+            password,
+        },
+    });
+};

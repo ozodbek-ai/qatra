@@ -4,10 +4,14 @@ import LessonItem from "./LessonItem";
 
 interface Props {
   lessons: PlayerLesson[];
+  selectedLessonId?: string;
+  onSelectLesson: (lesson: PlayerLesson) => void;
 }
 
 export default function PlayerSidebar({
   lessons,
+  selectedLessonId,
+  onSelectLesson,
 }: Props) {
   return (
     <aside className="space-y-3 rounded-xl bg-white p-6 shadow">
@@ -19,6 +23,10 @@ export default function PlayerSidebar({
         <LessonItem
           key={lesson.id}
           lesson={lesson}
+          selected={
+            selectedLessonId === lesson.id
+          }
+          onSelect={onSelectLesson}
         />
       ))}
     </aside>

@@ -42,8 +42,8 @@ export const getCourseQuizzes = (courseId) => {
         },
     });
 };
-export const getPassedQuizCount = (userId, quizIds) => {
-    return prisma.quizAttempt.count({
+export const getPassedQuizCount = async (userId, quizIds) => {
+    const passedQuizzes = await prisma.quizAttempt.findMany({
         where: {
             userId,
             quizId: {
@@ -51,5 +51,10 @@ export const getPassedQuizCount = (userId, quizIds) => {
             },
             passed: true,
         },
+        select: {
+            quizId: true,
+        },
+        distinct: ["quizId"],
     });
+    return passedQuizzes.length;
 };

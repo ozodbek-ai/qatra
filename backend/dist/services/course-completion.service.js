@@ -1,6 +1,11 @@
 import { prisma } from "../lib/prisma.js";
 import * as completionRepository from "../repositories/course-completion.repository.js";
 export const checkCourseCompletion = async (userId, courseId) => {
+    console.log("========================================");
+    console.log("=== COURSE COMPLETION CHECK STARTED ===");
+    console.log("userId:", userId);
+    console.log("courseId:", courseId);
+    // 1. Kursni olish
     const course = await prisma.course.findUnique({
         where: {
             id: courseId,
@@ -8,15 +13,25 @@ export const checkCourseCompletion = async (userId, courseId) => {
         include: {
             lessons: {
                 include: {
-                    quiz: true,
+                    quiz: {
+                        select: {
+                            id: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    order: "asc",
                 },
             },
         },
     });
     if (!course) {
+        console.log("❌ Course not found");
         return false;
     }
-    // 1. Barcha lessonlar tugaganmi?
+    console.log("Course:", course.title);
+    console.log("Total lessons:", course.lessons.length);
+    // 2. Barcha lessonlar completedmi?
     const completedLessons = await prisma.lessonProgress.count({
         where: {
             userId,
@@ -26,27 +41,60 @@ export const checkCourseCompletion = async (userId, courseId) => {
             },
         },
     });
-    if (completedLessons !== course.lessons.length) {
+    console.log("Completed lessons:", completedLessons);
+    console.log("Required lessons:", course.lessons.length);
+    if (completedLessons !==
+        course.lessons.length) {
+        console.log("❌ Course completion stopped:");
+        console.log("Not all lessons are completed.");
+        console.log("========================================");
         return false;
     }
-    // 2. Kursdagi barcha quizlarni olish
+    console.log("✅ All lessons completed");
+    // 3. Kursdagi quizlarni olish
     const quizzes = await completionRepository.getCourseQuizzes(courseId);
-    // 3. Agar quiz mavjud bo'lsa, hammasi topshirilgan bo'lishi kerak
+    console.log("Course quizzes:", quizzes.map((quiz) => quiz.id));
+    console.log("Total quizzes:", quizzes.length);
+    // 4. Quizlar mavjud bo'lsa,
+    // hammasidan o'tilgan bo'lishi kerak
     if (quizzes.length > 0) {
         const passedQuizCount = await completionRepository.getPassedQuizCount(userId, quizzes.map((quiz) => quiz.id));
-        if (passedQuizCount !== quizzes.length) {
+        console.log("Passed quizzes:", passedQuizCount);
+        console.log("Required quizzes:", quizzes.length);
+        if (passedQuizCount !==
+            quizzes.length) {
+            console.log("❌ Course completion stopped:");
+            console.log("Not all quizzes are passed.");
+            console.log("========================================");
             return false;
         }
+        console.log("✅ All quizzes passed");
     }
-    // 4. Completion oldin yaratilganmi?
+    else {
+        console.log("ℹ️ Course has no quizzes");
+    }
+    // 5. Completion oldin yaratilganmi?
     const existing = await completionRepository.findCompletion(userId, courseId);
     if (existing) {
+        console.log("✅ Course completion already exists");
+        console.log("Completion ID:", existing.id);
+        console.log("========================================");
         return true;
     }
-    // 5. Completion yaratish
-    await completionRepository.createCompletion(userId, courseId);
+    // 6. CourseCompletion yaratish
+    console.log("Creating course completion...");
+    const completion = await completionRepository.createCompletion(userId, courseId);
+    console.log("✅ Course completion created");
+    console.log("Completion ID:", completion.id);
+    // 7. Certificate yaratish
+    console.log("Generating certificate...");
     const { generateCertificate, } = await import("./certificate.service.js");
-    await generateCertificate(userId, courseId);
+    const certificate = await generateCertificate(userId, courseId);
+    console.log("✅ Certificate created");
+    console.log("Certificate ID:", certificate.id);
+    console.log("Certificate No:", certificate.certificateNo);
+    console.log("=== COURSE COMPLETION FINISHED ===");
+    console.log("========================================");
     return true;
 };
 export const getCompletedCourses = async (userId) => {

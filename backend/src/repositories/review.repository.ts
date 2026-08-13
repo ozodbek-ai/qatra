@@ -77,3 +77,28 @@ export const getCourseReviews = (
     },
   });
 };
+export const getAllReviews = () => {
+  return prisma.review.findMany({
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+
+      course: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};

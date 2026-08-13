@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
+
 import { Button } from "@/components/ui";
 import { useNavigate } from "react-router-dom";
 
@@ -7,6 +13,7 @@ interface Props {
   total: number;
   percentage: number;
   passed: boolean;
+  onRetry?: () => void;
 }
 
 export default function QuizResult({
@@ -14,22 +21,32 @@ export default function QuizResult({
   total,
   percentage,
   passed,
+  onRetry,
 }: Props) {
   const navigate = useNavigate();
 
   return (
-    <Card className="mx-auto max-w-xl">
+    <Card>
       <CardHeader>
-        <CardTitle>Quiz natijasi</CardTitle>
+        <CardTitle>
+          Quiz natijasi
+        </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <p>
-          Ball: <strong>{score}</strong> / {total}
+          Ball:{" "}
+          <strong>
+            {score}
+          </strong>{" "}
+          / {total}
         </p>
 
         <p>
-          Foiz: <strong>{percentage}%</strong>
+          Foiz:{" "}
+          <strong>
+            {percentage}%
+          </strong>
         </p>
 
         <div
@@ -39,12 +56,26 @@ export default function QuizResult({
               : "bg-red-600"
           }`}
         >
-          {passed ? "Muvaffaqiyatli" : "Yiqildingiz"}
+          {passed
+            ? "Muvaffaqiyatli"
+            : "Yiqildingiz"}
         </div>
+
+        {!passed && (
+          <Button
+            className="w-full"
+            onClick={onRetry}
+          >
+            Qayta topshirish
+          </Button>
+        )}
 
         <Button
           className="w-full"
-          onClick={() => navigate("/my-courses")}
+          variant="outline"
+          onClick={() =>
+            navigate("/my-courses")
+          }
         >
           Kurslarga qaytish
         </Button>

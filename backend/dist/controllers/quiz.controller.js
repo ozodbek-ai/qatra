@@ -33,3 +33,10 @@ export const getQuizController = asyncHandler(async (req, res) => {
         data: quiz,
     });
 });
+export const getAllQuizzesController = asyncHandler(async (req, res) => {
+    const data = await quizService.getAllQuizzes(req.query);
+    res.json({
+        success: true,
+        data,
+    });
+});

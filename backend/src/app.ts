@@ -29,6 +29,10 @@ import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.js";
 import { pinoHttp } from "pino-http";
 import { logger } from "./lib/logger.js";
+import settingsRoutes from "./routes/settings.routes.js";
+import userProfileRoutes
+  from "./routes/user-profile.routes.js";
+import profileRoutes from "./routes/profile.routes.js";
 
 
 
@@ -136,6 +140,18 @@ app.use(
   "/api-docs",
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec)
+);
+app.use(
+  "/api/v1/settings",
+  settingsRoutes
+);
+app.use(
+  "/api/v1/user",
+  userProfileRoutes
+);
+app.use(
+  "/user",
+  profileRoutes
 );
 
 // ❗ Error middleware eng oxirida bo'lishi kerak

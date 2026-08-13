@@ -10,6 +10,7 @@ export const authMiddleware = (
   next: NextFunction
 ) => {
   logger.info("Auth middleware started");
+  
 
   const authHeader = req.headers.authorization;
 
@@ -26,30 +27,32 @@ export const authMiddleware = (
   const token = authHeader.split(" ")[1];
 
   try {
-    const payload = verifyAccessToken(token) as {
-      userId: string;
-      email: string;
-      role: UserRole;
-    };
+  const payload = verifyAccessToken(token) as {
+    userId: string;
+    email: string;
+    role: UserRole;
+  };
 
-    logger.debug({
-      userId: payload.userId,
-      role: payload.role,
-    });
+  console.log("JWT Payload:", payload);
 
-    req.user = {
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role,
-    };
+  logger.debug({
+    userId: payload.userId,
+    role: payload.role,
+  });
 
-    next();
-  } catch (error) {
-    logger.error(error);
+  req.user = {
+    userId: payload.userId,
+    email: payload.email,
+    role: payload.role,
+  };
 
-    throw new AppError(
-      "Token noto'g'ri yoki eskirgan.",
-      401
-    );
-  }
+  next();
+} catch (error) {
+  logger.error(error);
+
+  throw new AppError(
+    "Token noto'g'ri yoki eskirgan.",
+    401
+  );
+}
 };

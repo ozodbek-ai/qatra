@@ -45,3 +45,6 @@ export const deleteReview = async (userId, courseId) => {
 export const getCourseReviews = (courseId) => {
     return reviewRepository.getCourseReviews(courseId);
 };
+export const getAllReviews = () => {
+    return reviewRepository.getAllReviews();
+};

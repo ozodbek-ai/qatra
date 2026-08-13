@@ -31,16 +31,15 @@ export default function AuthProvider({
   useEffect(() => {
     if (!token) return;
 
-    if (data) {
-      setUser({
-        id: data.data.userId,
-        fullName: "",
-        email: data.data.email,
-        role: data.data.role as
-          | "ADMIN"
-          | "STUDENT",
-      });
-    }
+   if (data) {
+  setUser({
+    id: data.data.userId,
+    fullName: data.data.fullName,
+    email: data.data.email,
+    role: data.data.role,
+    avatarUrl: data.data.avatarUrl,
+  });
+}
 
     if (isError) {
       logout();

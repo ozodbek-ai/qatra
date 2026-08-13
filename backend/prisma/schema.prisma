@@ -13,6 +13,11 @@ enum UserRole {
   ADMIN
 }
 
+enum QuestionType {
+  SINGLE
+  MULTIPLE
+}
+
 model User {
   id             String           @id @default(cuid())
   fullName       String
@@ -173,6 +178,8 @@ model Question {
 
   question String
 
+  type QuestionType @default(SINGLE)
+
   options Option[]
 
   createdAt DateTime @default(now())
@@ -258,4 +265,19 @@ model Review {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, courseId])
+}
+model SiteSettings {
+  id String @id @default(cuid())
+
+  platformName String @default("Qatra")
+  description String @default("Learning Management System")
+
+  logoUrl String?
+
+  supportEmail String?
+
+  defaultQuizPassPercentage Int @default(70)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -22,3 +22,10 @@ export const continueLearningController = asyncHandler(async (req, res) => {
         data,
     });
 });
+export const getAllProgressController = asyncHandler(async (req, res) => {
+    const data = await progressService.getAllProgress(req.query);
+    res.json({
+        success: true,
+        data,
+    });
+});

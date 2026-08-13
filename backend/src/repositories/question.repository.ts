@@ -8,10 +8,13 @@ export const createQuestion = (
     data: {
       quizId: data.quizId,
       question: data.question,
+      type: data.type,
+
       options: {
         create: data.options,
       },
     },
+
     include: {
       options: true,
     },

@@ -1,9 +1,17 @@
 import * as userRepository from "../repositories/user.repository.js";
+
 import { AppError } from "../utils/AppError.js";
-import type { UserQueryInput } from "../validators/user.validator.js";
+
+import {
+  comparePassword,
+  hashPassword,
+} from "../lib/bcrypt.js";
+
 import type {
+  UserQueryInput,
   UpdateRoleInput,
   UpdateStatusInput,
+  ChangePasswordInput,
 } from "../validators/user.validator.js";
 
 export const getUsers = async (
@@ -86,4 +94,122 @@ export const updateStatus = (
     userId,
     data.isActive
   );
+};
+export const getMyProfile = async (
+  userId: string
+) => {
+  const user =
+    await userRepository.getMyProfile(
+      userId
+    );
+
+  if (!user) {
+    throw new AppError(
+      "Foydalanuvchi topilmadi.",
+      404
+    );
+  }
+
+  return user;
+};
+
+export const updateMyProfile = async (
+  userId: string,
+  data: {
+    fullName: string;
+  }
+) => {
+  const user =
+    await userRepository.getMyProfile(
+      userId
+    );
+
+  if (!user) {
+    throw new AppError(
+      "Foydalanuvchi topilmadi.",
+      404
+    );
+  }
+
+  return userRepository.updateMyProfile(
+    userId,
+    {
+      fullName: data.fullName,
+    }
+  );
+};
+
+export const updateMyAvatar = async (
+  userId: string,
+  avatarUrl: string
+) => {
+  const user =
+    await userRepository.getMyProfile(
+      userId
+    );
+
+  if (!user) {
+    throw new AppError(
+      "Foydalanuvchi topilmadi.",
+      404
+    );
+  }
+
+  return userRepository.updateMyProfile(
+    userId,
+    {
+      avatarUrl,
+    }
+  );
+};
+
+
+export const changePassword = async (
+  userId: string,
+  data: ChangePasswordInput
+) => {
+  const user =
+    await userRepository.findUserByIdForPassword(
+      userId
+    );
+
+  if (!user) {
+    throw new AppError(
+      "Foydalanuvchi topilmadi.",
+      404
+    );
+  }
+
+  const isCurrentPasswordValid =
+    await comparePassword(
+      data.currentPassword,
+      user.password
+    );
+
+  if (!isCurrentPasswordValid) {
+    throw new AppError(
+      "Joriy parol noto'g'ri.",
+      400
+    );
+  }
+
+  if (
+    data.currentPassword ===
+    data.newPassword
+  ) {
+    throw new AppError(
+      "Yangi parol joriy paroldan farq qilishi kerak.",
+      400
+    );
+  }
+
+  const hashedPassword =
+    await hashPassword(data.newPassword);
+
+  await userRepository.updatePassword(
+    userId,
+    hashedPassword
+  );
+
+  return null;
 };

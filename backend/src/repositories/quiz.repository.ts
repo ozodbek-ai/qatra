@@ -19,6 +19,8 @@ export const findQuizByLesson = (
   });
 };
 
+// Submit uchun ishlatiladi.
+// Bu yerda tartibni o'zgartirmaymiz.
 export const findQuizWithQuestions = (
   quizId: string
 ) => {
@@ -26,7 +28,14 @@ export const findQuizWithQuestions = (
     where: {
       id: quizId,
     },
+
     include: {
+      lesson: {
+        select: {
+          courseId: true,
+        },
+      },
+
       questions: {
         include: {
           options: true,
@@ -55,6 +64,7 @@ export const createQuizAttempt = (
     },
   });
 };
+
 export const findQuizAttempt = (
   userId: string,
   quizId: string
@@ -69,6 +79,8 @@ export const findQuizAttempt = (
     },
   });
 };
+
+// Studentga quizni ko'rsatish uchun
 export const findQuizById = (
   quizId: string
 ) => {
@@ -76,7 +88,22 @@ export const findQuizById = (
     where: {
       id: quizId,
     },
+
     include: {
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+
+          course: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      },
+
       questions: {
         include: {
           options: {
@@ -86,10 +113,93 @@ export const findQuizById = (
             },
           },
         },
+
         orderBy: {
           createdAt: "asc",
         },
       },
     },
   });
+};
+export const getAllQuizzes = async (
+  skip: number,
+  take: number,
+  search?: string
+) => {
+  const where = search
+    ? {
+        OR: [
+          {
+            title: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            lesson: {
+              title: {
+                contains: search,
+                mode: "insensitive" as const,
+              },
+            },
+          },
+          {
+            lesson: {
+              course: {
+                title: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+            },
+          },
+        ],
+      }
+    : {};
+
+  const [quizzes, total] =
+    await prisma.$transaction([
+      prisma.quiz.findMany({
+        where,
+
+        skip,
+        take,
+
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        include: {
+          lesson: {
+            select: {
+              id: true,
+              title: true,
+
+              course: {
+                select: {
+                  id: true,
+                  title: true,
+                },
+              },
+            },
+          },
+
+          _count: {
+            select: {
+              questions: true,
+              attempts: true,
+            },
+          },
+        },
+      }),
+
+      prisma.quiz.count({
+        where,
+      }),
+    ]);
+
+  return {
+    quizzes,
+    total,
+  };
 };

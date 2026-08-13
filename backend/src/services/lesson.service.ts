@@ -165,3 +165,56 @@ export const deleteLesson = async (
     lessonId: id,
   });
 };
+export const getAdminLessonsByCourse =
+  async (courseId: string) => {
+    const course =
+      await courseRepository.findCourseById(
+        courseId
+      );
+
+    if (!course) {
+      throw new AppError(
+        "Kurs topilmadi.",
+        404
+      );
+    }
+
+    return lessonRepository.findAdminLessonsByCourse(
+      courseId
+    );
+  };
+  export const publishLesson = async (
+  id: string,
+  isPublished: boolean
+) => {
+  const lesson =
+    await lessonRepository.findLessonById(id);
+
+  if (!lesson) {
+    throw new AppError(
+      "Dars topilmadi.",
+      404
+    );
+  }
+
+  const updatedLesson =
+    await lessonRepository.updateLesson(
+      id,
+      {
+        isPublished,
+      }
+    );
+
+  logger.info({
+    message: isPublished
+      ? "Lesson published"
+      : "Lesson unpublished",
+    lessonId: id,
+  });
+
+  return updatedLesson;
+};
+
+export const getAllAdminLessons = async () => {
+  return lessonRepository.findAllAdminLessons();
+};

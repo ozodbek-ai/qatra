@@ -1,4 +1,5 @@
 import * as playerRepository from "../repositories/player.repository.js";
+import * as enrollmentRepository from "../repositories/enrollment.repository.js";
 import { logger } from "../lib/logger.js";
 import { AppError } from "../utils/AppError.js";
 
@@ -18,14 +19,22 @@ export const getCoursePlayer = async (
     );
 
   if (!course) {
-    logger.warn({
-      message: "Course not found",
-      courseId,
-    });
-
     throw new AppError(
       "Kurs topilmadi.",
       404
+    );
+  }
+
+  const enrollment =
+    await enrollmentRepository.findEnrollmentByUserAndCourse(
+      userId,
+      courseId
+    );
+
+  if (!enrollment) {
+    throw new AppError(
+      "Siz bu kursga yozilmagansiz.",
+      403
     );
   }
 
@@ -48,11 +57,13 @@ export const getCoursePlayer = async (
   const lessons = course.lessons.map(
     (lesson) => ({
       ...lesson,
-      completed: completedIds.has(lesson.id),
+      completed:
+        completedIds.has(lesson.id),
     })
   );
 
-  const completedCount = completedIds.size;
+  const completedCount =
+    completedIds.size;
 
   const progress =
     lessons.length === 0
@@ -65,15 +76,6 @@ export const getCoursePlayer = async (
     (lesson) => !lesson.completed
   );
 
-  logger.info({
-    message: "Course player loaded",
-    userId,
-    courseId,
-    progress,
-    completedLessons: completedCount,
-    totalLessons: lessons.length,
-  });
-
   return {
     course: {
       id: course.id,
@@ -81,9 +83,16 @@ export const getCoursePlayer = async (
       description: course.description,
       imageUrl: course.imageUrl,
     },
+
     progress,
-    completedLessons: [...completedIds],
+
+    completedLessons: [
+      ...completedIds,
+    ],
+
     lessons,
-    nextLesson: nextLesson ?? null,
+
+    nextLesson:
+      nextLesson ?? null,
   };
 };

@@ -1,15 +1,23 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Badge } from "@/components/ui";
 
+import { useAdminCourses } from "@/features/courses/hooks/useAdminCourses";
+
 import CoursesToolbar from "@/features/courses/components/CoursesToolbar";
 import CourseActions from "@/features/courses/components/CourseActions";
-import { useCourses } from "@/features/courses/hooks/useCourses";
 
 export default function CoursesPage() {
-  const { data: courses, isLoading } = useCourses();
+  const {
+    data: courses,
+    isLoading,
+    isError,
+  } = useAdminCourses();
 
   const [search, setSearch] = useState("");
+
+  const navigate = useNavigate();
 
   const filteredCourses =
     courses?.filter((course) =>
@@ -20,14 +28,22 @@ export default function CoursesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className="p-8">
         Yuklanmoqda...
       </div>
     );
   }
 
+  if (isError) {
+    return (
+      <div className="p-8 text-red-500">
+        Kurslarni yuklab bo'lmadi.
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div>
         <h1 className="text-3xl font-bold">
           Kurslar
@@ -41,7 +57,9 @@ export default function CoursesPage() {
       <CoursesToolbar
         search={search}
         onSearchChange={setSearch}
-        onCreate={() => {}}
+        onCreate={() =>
+          navigate("/admin/courses/new")
+        }
       />
 
       <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
@@ -115,10 +133,19 @@ export default function CoursesPage() {
                   <td className="p-4">
                     <div className="flex justify-center">
                       <CourseActions
+                        onLessons={() =>
+                          navigate(
+                            `/admin/courses/${course.id}/lessons`
+                          )
+                        }
                         onEdit={() =>
-                          console.log(
-                            "Edit:",
-                            course.id
+                          navigate(
+                            `/admin/courses/${course.id}/edit`,
+                            {
+                              state: {
+                                course,
+                              },
+                            }
                           )
                         }
                         onDelete={() =>

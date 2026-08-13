@@ -1,7 +1,12 @@
 import * as quizRepository from "../repositories/quiz.repository.js";
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/AppError.js";
+import * as courseCompletionService from "./course-completion.service.js";
+import { getPagination, } from "../utils/pagination.js";
 export const createQuiz = async (data) => {
+    console.log("================================");
+    console.log("CREATE QUIZ REQUEST");
+    console.log("Data:", data);
     const lesson = await prisma.lesson.findUnique({
         where: {
             id: data.lessonId,
@@ -14,7 +19,13 @@ export const createQuiz = async (data) => {
     if (existingQuiz) {
         throw new AppError("Bu dars uchun quiz allaqachon mavjud.", 400);
     }
-    return quizRepository.createQuiz(data);
+    const quiz = await quizRepository.createQuiz(data);
+    console.log("✅ QUIZ CREATED");
+    console.log("Created quiz ID:", quiz.id);
+    console.log("Lesson ID:", quiz.lessonId);
+    console.log("Title:", quiz.title);
+    console.log("================================");
+    return quiz;
 };
 export const submitQuiz = async (userId, quizId, data) => {
     const quiz = await quizRepository.findQuizWithQuestions(quizId);
@@ -22,18 +33,26 @@ export const submitQuiz = async (userId, quizId, data) => {
         throw new AppError("Quiz topilmadi.", 404);
     }
     const existingAttempt = await quizRepository.findQuizAttempt(userId, quizId);
-    if (existingAttempt) {
-        throw new AppError("Siz bu quizni allaqachon topshirgansiz.", 400);
+    if (existingAttempt?.passed) {
+        throw new AppError("Siz bu quizni allaqachon muvaffaqiyatli topshirgansiz.", 400);
     }
     let score = 0;
-    for (const answer of data.answers) {
-        const question = quiz.questions.find((q) => q.id === answer.questionId);
-        if (!question) {
+    for (const question of quiz.questions) {
+        const answer = data.answers.find((item) => item.questionId === question.id);
+        if (!answer) {
             continue;
         }
-        const correctOption = question.options.find((option) => option.isCorrect);
-        if (correctOption &&
-            correctOption.id === answer.optionId) {
+        const selectedOptionIds = [...answer.optionIds].sort();
+        const correctOptionIds = question.options
+            .filter((option) => option.isCorrect)
+            .map((option) => option.id)
+            .sort();
+        if (selectedOptionIds.length !==
+            correctOptionIds.length) {
+            continue;
+        }
+        const isCorrect = selectedOptionIds.every((id, index) => id === correctOptionIds[index]);
+        if (isCorrect) {
             score++;
         }
     }
@@ -41,8 +60,28 @@ export const submitQuiz = async (userId, quizId, data) => {
     const percentage = total === 0
         ? 0
         : Math.round((score / total) * 100);
-    const passed = percentage >= quiz.passPercentage;
+    const passed = percentage >=
+        quiz.passPercentage;
     await quizRepository.createQuizAttempt(userId, quizId, score, total, percentage, passed);
+    // Quiz muvaffaqiyatli topshirilgan bo'lsa,
+    // kurs tugaganligini tekshiramiz.
+    if (passed) {
+        const quizWithLesson = await prisma.quiz.findUnique({
+            where: {
+                id: quizId,
+            },
+            select: {
+                lesson: {
+                    select: {
+                        courseId: true,
+                    },
+                },
+            },
+        });
+        if (quizWithLesson?.lesson.courseId) {
+            await courseCompletionService.checkCourseCompletion(userId, quizWithLesson.lesson.courseId);
+        }
+    }
     return {
         score,
         total,
@@ -64,9 +103,47 @@ export const getQuizResult = async (userId, quizId) => {
     };
 };
 export const getQuiz = async (quizId) => {
+    console.log("================================");
+    console.log("GET QUIZ REQUEST");
+    console.log("quizId:", quizId);
     const quiz = await quizRepository.findQuizById(quizId);
+    console.log("Quiz found:", Boolean(quiz));
     if (!quiz) {
+        console.log("❌ QUIZ NOT FOUND IN DATABASE:", quizId);
         throw new AppError("Quiz topilmadi.", 404);
     }
+    console.log("✅ QUIZ FOUND:", quiz.id);
+    console.log("Questions:", quiz.questions.length);
+    console.log("================================");
     return quiz;
+};
+export const getAllQuizzes = async (query) => {
+    const { page, limit, skip, take, } = getPagination(query);
+    const search = query.search?.trim();
+    const result = await quizRepository.getAllQuizzes(skip, take, search);
+    return {
+        items: result.quizzes.map((quiz) => ({
+            id: quiz.id,
+            title: quiz.title,
+            description: quiz.description,
+            passPercentage: quiz.passPercentage,
+            lesson: {
+                id: quiz.lesson.id,
+                title: quiz.lesson.title,
+            },
+            course: {
+                id: quiz.lesson.course.id,
+                title: quiz.lesson.course.title,
+            },
+            questionsCount: quiz._count.questions,
+            attemptsCount: quiz._count.attempts,
+            createdAt: quiz.createdAt,
+        })),
+        pagination: {
+            page,
+            limit,
+            total: result.total,
+            totalPages: Math.ceil(result.total / limit),
+        },
+    };
 };

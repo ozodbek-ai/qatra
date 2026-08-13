@@ -62,3 +62,47 @@ export const countLessonsByCourse = (courseId) => {
         },
     });
 };
+export const findAdminLessonsByCourse = (courseId) => {
+    return prisma.lesson.findMany({
+        where: {
+            courseId,
+        },
+        orderBy: {
+            order: "asc",
+        },
+        include: {
+            quiz: {
+                select: {
+                    id: true,
+                    title: true,
+                },
+            },
+        },
+    });
+};
+export const findAllAdminLessons = () => {
+    return prisma.lesson.findMany({
+        orderBy: [
+            {
+                courseId: "asc",
+            },
+            {
+                order: "asc",
+            },
+        ],
+        include: {
+            course: {
+                select: {
+                    id: true,
+                    title: true,
+                },
+            },
+            quiz: {
+                select: {
+                    id: true,
+                    title: true,
+                },
+            },
+        },
+    });
+};

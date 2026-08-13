@@ -2,6 +2,10 @@ import { z } from "zod";
 export const createQuestionSchema = z.object({
     quizId: z.string().min(1),
     question: z.string().min(3),
+    type: z.enum([
+        "SINGLE",
+        "MULTIPLE",
+    ]),
     options: z
         .array(z.object({
         text: z.string().min(1),

@@ -3,6 +3,10 @@ import type { Request, Response } from "express";
 import { logger } from "../lib/logger.js";
 
 import { asyncHandler } from "../utils/asyncHandler.js";
+import {
+  getPagination,
+  type PaginationQuery,
+} from "../utils/pagination.js";
 
 import * as enrollmentService from "../services/enrollment.service.js";
 
@@ -47,3 +51,17 @@ export const myCoursesController =
       data: courses,
     });
   });
+  export const getAllEnrollmentsController =
+  asyncHandler(
+    async (req, res) => {
+      const data =
+        await enrollmentService.getAllEnrollments(
+          req.query as PaginationQuery
+        );
+
+      res.status(200).json({
+        success: true,
+        data,
+      });
+    }
+  );

@@ -14,6 +14,7 @@ export interface User {
   fullName: string;
   email: string;
   role: "ADMIN" | "STUDENT";
+  avatarUrl: string | null;
 }
 
 export interface LoginResponse {

@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import * as quizService from "../services/quiz.service.js";
 import { createQuizSchema } from "../validators/quiz.validator.js";
-
+import type { PaginationQuery } from "../utils/pagination.js";
 export const createQuizController =
   asyncHandler(async (req, res) => {
 
@@ -65,5 +65,17 @@ export const submitQuizController =
     res.json({
       success: true,
       data: quiz,
+    });
+  });
+  export const getAllQuizzesController =
+  asyncHandler(async (req, res) => {
+    const data =
+      await quizService.getAllQuizzes(
+        req.query as PaginationQuery
+      );
+
+    res.json({
+      success: true,
+      data,
     });
   });

@@ -33,3 +33,10 @@ export const deleteReviewController = asyncHandler(async (req, res) => {
         message: "Review o'chirildi.",
     });
 });
+export const getAllReviewsController = asyncHandler(async (req, res) => {
+    const reviews = await reviewService.getAllReviews();
+    res.json({
+        success: true,
+        data: reviews,
+    });
+});

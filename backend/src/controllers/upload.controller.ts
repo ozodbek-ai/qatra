@@ -1,9 +1,18 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadVideo } from "../services/upload.service.js";
+
+import {
+  uploadVideo,
+  uploadAvatar,
+} from "../services/upload.service.js";
+
 import { AppError } from "../utils/AppError.js";
 
-export const uploadVideoController = asyncHandler(
-  async (req, res) => {
+import { prisma } from "../lib/prisma.js";
+
+
+export const uploadVideoController =
+  asyncHandler(async (req, res) => {
+
     if (!req.file) {
       throw new AppError(
         "Video fayl topilmadi.",
@@ -11,15 +20,62 @@ export const uploadVideoController = asyncHandler(
       );
     }
 
-    const result = await uploadVideo(req.file) as {
-      secure_url: string;
-    };
+    const result =
+      await uploadVideo(req.file) as {
+        secure_url: string;
+      };
 
     res.json({
       success: true,
+
       data: {
         url: result.secure_url,
       },
     });
-  }
-);
+  });
+
+
+export const updateMyAvatarController =
+  asyncHandler(async (req, res) => {
+
+    if (!req.file) {
+      throw new AppError(
+        "Avatar rasmi topilmadi.",
+        400
+      );
+    }
+
+    const result =
+      await uploadAvatar(req.file) as {
+        secure_url: string;
+      };
+
+    const user =
+      await prisma.user.update({
+        where: {
+          id: req.user!.userId,
+        },
+
+        data: {
+          avatarUrl:
+            result.secure_url,
+        },
+
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          avatarUrl: true,
+        },
+      });
+
+    res.json({
+      success: true,
+
+      message:
+        "Profil rasmi muvaffaqiyatli yangilandi.",
+
+      data: user,
+    });
+  });

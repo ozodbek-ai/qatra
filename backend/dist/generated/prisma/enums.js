@@ -11,6 +11,10 @@ export const UserRole = {
     STUDENT: 'STUDENT',
     ADMIN: 'ADMIN'
 };
+export const QuestionType = {
+    SINGLE: 'SINGLE',
+    MULTIPLE: 'MULTIPLE'
+};
 export const CourseLevel = {
     BEGINNER: 'BEGINNER',
     INTERMEDIATE: 'INTERMEDIATE',

@@ -50,6 +50,72 @@ export const getUserEnrollments = (userId) => {
         },
     });
 };
+export const getAllEnrollments = async (skip, take, search) => {
+    const where = search
+        ? {
+            OR: [
+                {
+                    user: {
+                        fullName: {
+                            contains: search,
+                            mode: "insensitive",
+                        },
+                    },
+                },
+                {
+                    user: {
+                        email: {
+                            contains: search,
+                            mode: "insensitive",
+                        },
+                    },
+                },
+                {
+                    course: {
+                        title: {
+                            contains: search,
+                            mode: "insensitive",
+                        },
+                    },
+                },
+            ],
+        }
+        : {};
+    const [enrollments, total] = await prisma.$transaction([
+        prisma.enrollment.findMany({
+            where,
+            skip,
+            take,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                    },
+                },
+                course: {
+                    select: {
+                        id: true,
+                        title: true,
+                        slug: true,
+                        imageUrl: true,
+                    },
+                },
+            },
+            orderBy: {
+                enrolledAt: "desc",
+            },
+        }),
+        prisma.enrollment.count({
+            where,
+        }),
+    ]);
+    return {
+        enrollments,
+        total,
+    };
+};
 export const deleteEnrollment = (id) => {
     return prisma.enrollment.delete({
         where: {

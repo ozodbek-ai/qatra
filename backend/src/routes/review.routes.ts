@@ -4,8 +4,10 @@ import {
   getCourseReviewsController,
   updateReviewController,
   deleteReviewController,
+  getAllReviewsController,
 } from "../controllers/review.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { authorize } from "../middlewares/authorize.middleware.js";
 
 const router = Router();
 
@@ -14,6 +16,12 @@ router.get(
   getCourseReviewsController
 );
 
+router.get(
+  "/admin/all",
+  authMiddleware,
+  authorize("ADMIN"),
+  getAllReviewsController
+);
 router.post(
   "/",
   authMiddleware,

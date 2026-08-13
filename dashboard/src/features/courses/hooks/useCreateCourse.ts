@@ -15,8 +15,8 @@ export function useCreateCourse() {
       );
 
       queryClient.invalidateQueries({
-        queryKey: ["admin-courses"],
-      });
+      queryKey: ["courses"],
+    });
     },
   });
 }

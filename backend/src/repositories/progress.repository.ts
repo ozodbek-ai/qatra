@@ -76,3 +76,97 @@ export const getCompletedLessonIds = (
     },
   });
 };
+export const getAllProgress = async (
+  skip: number,
+  take: number,
+  search?: string
+) => {
+  const where = search
+    ? {
+        OR: [
+          {
+            user: {
+              fullName: {
+                contains: search,
+                mode: "insensitive" as const,
+              },
+            },
+          },
+          {
+            user: {
+              email: {
+                contains: search,
+                mode: "insensitive" as const,
+              },
+            },
+          },
+          {
+            lesson: {
+              title: {
+                contains: search,
+                mode: "insensitive" as const,
+              },
+            },
+          },
+          {
+            lesson: {
+              course: {
+                title: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+            },
+          },
+        ],
+      }
+    : {};
+
+  const [progress, total] =
+    await prisma.$transaction([
+      prisma.lessonProgress.findMany({
+        where,
+
+        skip,
+        take,
+
+        orderBy: {
+          lastViewedAt: "desc",
+        },
+
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
+          },
+
+          lesson: {
+            select: {
+              id: true,
+              title: true,
+              courseId: true,
+
+              course: {
+                select: {
+                  id: true,
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+
+      prisma.lessonProgress.count({
+        where,
+      }),
+    ]);
+
+  return {
+    progress,
+    total,
+  };
+};

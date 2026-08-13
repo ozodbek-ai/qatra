@@ -1,0 +1,11 @@
+import { Router } from "express";
+import { getMyProfileController, updateMyProfileController, changePasswordController, updateMyAvatarController, } from "../controllers/user.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { uploadAvatarFile, } from "../middlewares/upload.middleware.js";
+const router = Router();
+router.use(authMiddleware);
+router.get("/profile", getMyProfileController);
+router.put("/profile", updateMyProfileController);
+router.put("/password", changePasswordController);
+router.post("/profile/avatar", uploadAvatarFile.single("avatar"), updateMyAvatarController);
+export default router;
