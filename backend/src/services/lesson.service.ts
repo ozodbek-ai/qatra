@@ -39,7 +39,9 @@ export const createLesson = async (
 };
 
 export const getLessonsByCourse = async (
-  courseId: string
+  courseId: string,
+  userId: string,
+  role?: string
 ) => {
   const course =
     await courseRepository.findCourseById(
@@ -53,9 +55,29 @@ export const getLessonsByCourse = async (
     );
   }
 
+  if (role === "ADMIN") {
+    return lessonRepository.findLessonsByCourse(
+      courseId
+    );
+  }
+
+  const enrollment =
+    await enrollmentRepository.findEnrollmentByUserAndCourse(
+      userId,
+      courseId
+    );
+
+  if (!enrollment) {
+    throw new AppError(
+      "Siz bu kursga yozilmagansiz.",
+      403
+    );
+  }
+
   logger.info({
     message: "Lessons fetched",
     courseId,
+    userId,
   });
 
   return lessonRepository.findLessonsByCourse(
@@ -183,7 +205,7 @@ export const getAdminLessonsByCourse =
       courseId
     );
   };
-  export const publishLesson = async (
+export const publishLesson = async (
   id: string,
   isPublished: boolean
 ) => {
@@ -194,6 +216,13 @@ export const getAdminLessonsByCourse =
     throw new AppError(
       "Dars topilmadi.",
       404
+    );
+  }
+
+  if (isPublished && !lesson.videoUrl) {
+    throw new AppError(
+      "Darsni nashr qilish uchun video yuklash kerak.",
+      400
     );
   }
 

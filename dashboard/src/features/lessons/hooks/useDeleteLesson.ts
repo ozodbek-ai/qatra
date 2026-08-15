@@ -13,16 +13,22 @@ export function useDeleteLesson() {
     mutationFn: deleteLesson,
 
     onSuccess: async () => {
-      console.log("DELETE SUCCESS");
+  console.log("DELETE SUCCESS");
 
-      await queryClient.invalidateQueries({
-        queryKey: ["lessons"],
-      });
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: ["lessons"],
+    }),
 
-      toast.success(
-        "Dars muvaffaqiyatli o'chirildi."
-      );
-    },
+    queryClient.invalidateQueries({
+      queryKey: ["admin-lessons"],
+    }),
+  ]);
+
+  toast.success(
+    "Dars muvaffaqiyatli o'chirildi."
+  );
+},
 
     onError: (error) => {
       console.error("DELETE ERROR:", error);

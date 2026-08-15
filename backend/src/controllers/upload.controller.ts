@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   uploadVideo,
   uploadAvatar,
+  uploadCourseImage,
 } from "../services/upload.service.js";
 
 import { AppError } from "../utils/AppError.js";
@@ -77,5 +78,27 @@ export const updateMyAvatarController =
         "Profil rasmi muvaffaqiyatli yangilandi.",
 
       data: user,
+    });
+  });
+
+  export const uploadCourseImageController =
+  asyncHandler(async (req, res) => {
+    if (!req.file) {
+      throw new AppError(
+        "Kurs rasmi topilmadi.",
+        400
+      );
+    }
+
+    const result =
+      await uploadCourseImage(req.file) as {
+        secure_url: string;
+      };
+
+    res.json({
+      success: true,
+      data: {
+        url: result.secure_url,
+      },
     });
   });

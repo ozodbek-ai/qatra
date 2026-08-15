@@ -42,7 +42,9 @@ export const getLessonsByCourseController = asyncHandler(
   async (req, res) => {
     const lessons =
       await lessonService.getLessonsByCourse(
-        req.params.courseId as string
+        req.params.courseId as string,
+        req.user!.userId,
+        req.user!.role
       );
 
     res.json({
@@ -135,12 +137,16 @@ export const getAdminLessonsController =
       data: lessons,
     });
   });
-  export const publishLessonController = asyncHandler(
+export const publishLessonController = asyncHandler(
   async (req, res) => {
+    const isPublished =
+      req.body.isPublished === true ||
+      req.body.isPublished === "true";
+
     const lesson =
       await lessonService.publishLesson(
         req.params.id as string,
-        req.body.isPublished
+        isPublished
       );
 
     res.json({

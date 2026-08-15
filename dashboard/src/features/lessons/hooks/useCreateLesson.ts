@@ -15,13 +15,17 @@ export function useCreateLesson() {
     mutationFn: createLesson,
 
     onSuccess() {
-      toast.success(
-        "Dars muvaffaqiyatli yaratildi."
-      );
+  toast.success(
+    "Dars muvaffaqiyatli yaratildi."
+  );
 
-      queryClient.invalidateQueries({
-        queryKey: ["lessons"],
-      });
-    },
+  queryClient.invalidateQueries({
+    queryKey: ["lessons"],
+  });
+
+  queryClient.invalidateQueries({
+    queryKey: ["admin-lessons"],
+  });
+},
   });
 }

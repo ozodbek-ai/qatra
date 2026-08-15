@@ -1,40 +1,61 @@
-import { Button } from "@/components/ui";
-
-interface Props {
+interface OptionButtonProps {
   text: string;
   selected: boolean;
+  multiple: boolean;
   onClick: () => void;
-  multiple?: boolean;
 }
 
 export default function OptionButton({
   text,
   selected,
+  multiple,
   onClick,
-  multiple = false,
-}: Props) {
+}: OptionButtonProps) {
   return (
-    <Button
+    <button
       type="button"
-      variant={
-        selected
-          ? "primary"
-          : "outline"
-      }
-      className="w-full justify-start gap-3"
       onClick={onClick}
+      className={[
+        "flex w-full items-center gap-4 rounded-xl border-2 px-4 py-3 text-left transition-all duration-150",
+        "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
+
+        selected
+          ? "border-blue-500 bg-blue-50 text-slate-900 shadow-sm"
+          : "border-slate-300 bg-white text-slate-800 hover:border-blue-400 hover:bg-slate-50",
+      ].join(" ")}
     >
+      {/* Checkbox / Radio */}
       <span
-        className={
+        className={[
+          "flex h-5 w-5 shrink-0 items-center justify-center border-2 transition-all",
+
           multiple
-            ? "flex h-5 w-5 items-center justify-center rounded border text-xs"
-            : "flex h-5 w-5 items-center justify-center rounded-full border text-xs"
-        }
+            ? "rounded"
+            : "rounded-full",
+
+          selected
+            ? "border-blue-600 bg-blue-600"
+            : "border-slate-400 bg-white",
+        ].join(" ")}
       >
-        {selected ? "✓" : ""}
+        {selected && (
+          <span className="text-xs font-bold text-white">
+            ✓
+          </span>
+        )}
       </span>
 
-      {text}
-    </Button>
+      {/* Variant text */}
+      <span
+        className={[
+          "font-medium",
+          selected
+            ? "text-blue-900"
+            : "text-slate-800",
+        ].join(" ")}
+      >
+        {text}
+      </span>
+    </button>
   );
 }

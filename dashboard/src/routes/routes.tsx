@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
-
-import CoursesPage from "@/pages/admin/CoursesPage";
+import AdminCoursesPage from "@/pages/admin/CoursesPage";
+import StudentCoursesPage from "@/pages/student/CoursesPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import PlaygroundPage from "@/pages/dev/PlaygroundPage";
 import LandingPage from "@/pages/public/LandingPage";
@@ -57,6 +57,10 @@ export const router = createBrowserRouter([
     path: "/",
     element: <LandingPage />,
   },
+// {
+//   path: "/courses/:slug",
+//   element: <CourseDetailsPage />,
+// },
 
   {
     path: "/playground",
@@ -72,10 +76,6 @@ export const router = createBrowserRouter([
     ),
   },
 
-  {
-    path: "/courses/:slug",
-    element: <CourseDetailsPage />,
-  },
 
   {
     path: "/quiz/:quizId",
@@ -90,40 +90,65 @@ export const router = createBrowserRouter([
    * STUDENT ROUTES
    */
 
-  {
-    element: (
-      <ProtectedRoute>
-        <StudentLayout />
-      </ProtectedRoute>
-    ),
+{
+  element: <StudentLayout />,
+  children: [
+    {
+      path: "/courses",
+      element: <StudentCoursesPage />,
+    },
 
-    children: [
-      {
-        path: "/dashboard",
-        element: <StudentDashboardPage />,
-      },
+    {
+      path: "/courses/:slug",
+      element: <CourseDetailsPage />,
+    },
 
-      {
-        path: "/my-courses",
-        element: <MyCoursesPage />,
-      },
+    {
+      path: "/dashboard",
+      element: (
+        <ProtectedRoute>
+          <StudentDashboardPage />
+        </ProtectedRoute>
+      ),
+    },
 
-      {
-        path: "/player/:courseId",
-        element: <PlayerPage />,
-      },
+    {
+      path: "/my-courses",
+      element: (
+        <ProtectedRoute>
+          <MyCoursesPage />
+        </ProtectedRoute>
+      ),
+    },
 
-      {
-        path: "/certificates",
-        element: <CertificatesPage />,
-      },
+    {
+      path: "/player/:courseId",
+      element: (
+        <ProtectedRoute>
+          <PlayerPage />
+        </ProtectedRoute>
+      ),
+    },
 
-      {
-        path: "/settings",
-        element: <SettingsPage />,
-      },
-    ],
-  },
+    {
+      path: "/certificates",
+      element: (
+        <ProtectedRoute>
+          <CertificatesPage />
+        </ProtectedRoute>
+      ),
+    },
+
+    {
+      path: "/settings",
+      element: (
+        <ProtectedRoute>
+          <SettingsPage />
+        </ProtectedRoute>
+      ),
+    },
+  ],
+},
 
   /*
    * ADMIN ROUTES
@@ -139,20 +164,23 @@ export const router = createBrowserRouter([
     ),
 
     children: [
-      {
-        index: true,
-        element: <AdminDashboardPage />,
-      },
+  {
+    index: true,
+    element: <AdminDashboardPage />,
+  },
+
+  {
+    path: "dashboard",
+    element: <AdminDashboardPage />,
+  },
+  {
+  path: "courses",
+  element: <AdminCoursesPage />,
+},
 
       /*
        * Courses
        */
-
-      {
-        path: "courses",
-        element: <CoursesPage />,
-      },
-
       {
         path: "courses/new",
         element: <CreateCoursePage />,

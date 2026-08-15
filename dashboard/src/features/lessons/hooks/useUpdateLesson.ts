@@ -20,13 +20,17 @@ export function useUpdateLesson() {
     }) => updateLesson(id, data),
 
     onSuccess() {
-      toast.success(
-        "Dars muvaffaqiyatli yangilandi."
-      );
+  toast.success(
+    "Dars muvaffaqiyatli yangilandi."
+  );
 
-      queryClient.invalidateQueries({
-        queryKey: ["lessons"],
-      });
-    },
+  queryClient.invalidateQueries({
+    queryKey: ["lessons"],
+  });
+
+  queryClient.invalidateQueries({
+    queryKey: ["admin-lessons"],
+  });
+},
   });
 }

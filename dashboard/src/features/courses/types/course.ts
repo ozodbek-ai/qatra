@@ -46,7 +46,7 @@ export interface Course {
 
   isPublished: boolean;
 
-  lessons: Lesson[];
+  lessons?: Lesson[];
 
   reviews: Review[];
 

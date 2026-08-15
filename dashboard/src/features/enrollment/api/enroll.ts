@@ -10,5 +10,5 @@ export const enroll = async (
     }
   );
 
-  return response.data;
+  return response.data.data;
 };

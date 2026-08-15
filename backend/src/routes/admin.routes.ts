@@ -6,7 +6,7 @@ import { authorize } from "../middlewares/authorize.middleware.js";
 const router = Router();
 
 router.get(
-  "/statistics",
+  "/dashboard",
   authMiddleware,
   authorize("ADMIN"),
   statisticsController

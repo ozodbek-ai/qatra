@@ -2,19 +2,28 @@ import {
   BookOpen,
   Pencil,
   Trash2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
+
 import { Button } from "@/components/ui";
 
 type CourseActionsProps = {
   onLessons: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onPublish: () => void;
+  isPublished: boolean;
+  isPublishing?: boolean;
 };
 
 export default function CourseActions({
   onLessons,
   onEdit,
   onDelete,
+  onPublish,
+  isPublished,
+  isPublishing = false,
 }: CourseActionsProps) {
   return (
     <div className="flex items-center gap-2">
@@ -26,6 +35,7 @@ export default function CourseActions({
       >
         <BookOpen size={18} />
       </Button>
+
       <Button
         variant="ghost"
         size="icon"
@@ -33,6 +43,24 @@ export default function CourseActions({
         title="Tahrirlash"
       >
         <Pencil size={18} />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onPublish}
+        disabled={isPublishing}
+        title={
+          isPublished
+            ? "Draftga qaytarish"
+            : "Nashr qilish"
+        }
+      >
+        {isPublished ? (
+          <EyeOff size={18} />
+        ) : (
+          <Eye size={18} />
+        )}
       </Button>
 
       <Button

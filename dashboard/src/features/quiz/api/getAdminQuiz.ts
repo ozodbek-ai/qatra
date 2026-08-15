@@ -7,7 +7,7 @@ export const getAdminQuiz = async (
   const response = await api.get<{
     success: boolean;
     data: Quiz;
-  }>(`/quizzes/${quizId}`);
+  }>(`/quizzes/admin/${quizId}`);
 
   return response.data.data;
 };

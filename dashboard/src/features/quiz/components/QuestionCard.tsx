@@ -31,13 +31,13 @@ export default function QuestionCard({
     question.type === "MULTIPLE";
 
   return (
-    <Card>
+    <Card className="border border-slate-200 bg-white text-slate-900 shadow-sm">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="text-lg font-bold text-slate-900">
           {question.question}
         </CardTitle>
 
-        <p className="text-sm text-[var(--color-muted)]">
+        <p className="text-sm text-slate-500">
           {isMultiple
             ? "Bir nechta javobni tanlang."
             : "Bitta javobni tanlang."}

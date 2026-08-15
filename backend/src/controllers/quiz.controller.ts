@@ -79,3 +79,15 @@ export const submitQuizController =
       data,
     });
   });
+  export const getAdminQuizController =
+  asyncHandler(async (req, res) => {
+    const quiz =
+      await quizService.getAdminQuiz(
+        req.params.quizId as string
+      );
+
+    res.json({
+      success: true,
+      data: quiz,
+    });
+  });

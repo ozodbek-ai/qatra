@@ -29,24 +29,6 @@ export const findCourseBySlug = (
     },
 
     include: {
-      lessons: {
-        where: {
-          isPublished: true,
-        },
-
-        orderBy: {
-          order: "asc",
-        },
-
-        include: {
-          quiz: {
-            select: {
-              id: true,
-            },
-          },
-        },
-      },
-
       reviews: {
         include: {
           user: {

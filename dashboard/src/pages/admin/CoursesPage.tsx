@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui";
 
 import { useAdminCourses } from "@/features/courses/hooks/useAdminCourses";
+import { useDeleteCourse } from "@/features/courses/hooks/useDeleteCourse";
+import { usePublishCourse } from "@/features/courses/hooks/usePublishCourse";
 
 import CoursesToolbar from "@/features/courses/components/CoursesToolbar";
 import CourseActions from "@/features/courses/components/CourseActions";
@@ -15,7 +17,14 @@ export default function CoursesPage() {
     isError,
   } = useAdminCourses();
 
-  const [search, setSearch] = useState("");
+  const deleteCourseMutation =
+    useDeleteCourse();
+
+  const publishCourseMutation =
+    usePublishCourse();
+
+  const [search, setSearch] =
+    useState("");
 
   const navigate = useNavigate();
 
@@ -25,6 +34,44 @@ export default function CoursesPage() {
         .toLowerCase()
         .includes(search.toLowerCase())
     ) ?? [];
+
+  const handleDelete = (
+    courseId: string,
+    courseTitle: string
+  ) => {
+    const confirmed = window.confirm(
+      `"${courseTitle}" kursini o'chirishni xohlaysizmi?\n\nUnga bog'langan darslar, quizlar, natijalar va boshqa ma'lumotlar ham o'chiriladi.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteCourseMutation.mutate(courseId);
+  };
+
+  const handlePublish = (
+    courseId: string,
+    courseTitle: string,
+    isPublished: boolean
+  ) => {
+    const action = isPublished
+      ? "draft holatiga qaytarish"
+      : "nashr qilish";
+
+    const confirmed = window.confirm(
+      `"${courseTitle}" kursini ${action}ni xohlaysizmi?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    publishCourseMutation.mutate({
+      id: courseId,
+      isPublished: !isPublished,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -99,66 +146,81 @@ export default function CoursesPage() {
                 </td>
               </tr>
             ) : (
-              filteredCourses.map((course) => (
-                <tr
-                  key={course.id}
-                  className="border-b border-[var(--color-border)] hover:bg-[var(--color-background)]"
-                >
-                  <td className="p-4 font-medium">
-                    {course.title}
-                  </td>
+              filteredCourses.map(
+                (course) => (
+                  <tr
+                    key={course.id}
+                    className="border-b border-[var(--color-border)] hover:bg-[var(--color-background)]"
+                  >
+                    <td className="p-4 font-medium">
+                      {course.title}
+                    </td>
 
-                  <td className="p-4">
-                    {course.category ?? "-"}
-                  </td>
+                    <td className="p-4">
+                      {course.category ?? "-"}
+                    </td>
 
-                  <td className="p-4">
-                    ${course.price}
-                  </td>
+                    <td className="p-4">
+                      ${course.price}
+                    </td>
 
-                  <td className="p-4">
-                    <Badge
-                      variant={
-                        course.isPublished
-                          ? "success"
-                          : "warning"
-                      }
-                    >
-                      {course.isPublished
-                        ? "Published"
-                        : "Draft"}
-                    </Badge>
-                  </td>
-
-                  <td className="p-4">
-                    <div className="flex justify-center">
-                      <CourseActions
-                        onLessons={() =>
-                          navigate(
-                            `/admin/courses/${course.id}/lessons`
-                          )
+                    <td className="p-4">
+                      <Badge
+                        variant={
+                          course.isPublished
+                            ? "success"
+                            : "warning"
                         }
-                        onEdit={() =>
-                          navigate(
-                            `/admin/courses/${course.id}/edit`,
-                            {
-                              state: {
-                                course,
-                              },
-                            }
-                          )
-                        }
-                        onDelete={() =>
-                          console.log(
-                            "Delete:",
-                            course.id
-                          )
-                        }
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))
+                      >
+                        {course.isPublished
+                          ? "Published"
+                          : "Draft"}
+                      </Badge>
+                    </td>
+
+                    <td className="p-4">
+                      <div className="flex justify-center">
+                        <CourseActions
+                          onLessons={() =>
+                            navigate(
+                              `/admin/courses/${course.id}/lessons`
+                            )
+                          }
+                          onEdit={() =>
+                            navigate(
+                              `/admin/courses/${course.id}/edit`,
+                              {
+                                state: {
+                                  course,
+                                },
+                              }
+                            )
+                          }
+                          onDelete={() =>
+                            handleDelete(
+                              course.id,
+                              course.title
+                            )
+                          }
+                          onPublish={() =>
+                            handlePublish(
+                              course.id,
+                              course.title,
+                              course.isPublished
+                            )
+                          }
+                          isPublished={
+                            course.isPublished
+                          }
+                          isPublishing={
+                            publishCourseMutation.isPending
+                          }
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )
+              )
             )}
           </tbody>
         </table>

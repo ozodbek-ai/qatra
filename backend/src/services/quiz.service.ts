@@ -82,13 +82,30 @@ export const submitQuiz = async (
     );
 
   if (!quiz) {
-    throw new AppError(
-      "Quiz topilmadi.",
-      404
-    );
-  }
+  throw new AppError(
+    "Quiz topilmadi.",
+    404
+  );
+}
 
-  const existingAttempt =
+const enrollment =
+  await prisma.enrollment.findUnique({
+    where: {
+      userId_courseId: {
+        userId,
+        courseId: quiz.lesson.courseId,
+      },
+    },
+  });
+
+if (!enrollment) {
+  throw new AppError(
+    "Siz bu kursga yozilmagansiz.",
+    403
+  );
+}
+
+const existingAttempt = 
   await quizRepository.findQuizAttempt(
     userId,
     quizId
@@ -345,4 +362,21 @@ export const getAllQuizzes = async (
         ),
     },
   };
+};
+export const getAdminQuiz = async (
+  quizId: string
+) => {
+  const quiz =
+    await quizRepository.findAdminQuizById(
+      quizId
+    );
+
+  if (!quiz) {
+    throw new AppError(
+      "Quiz topilmadi.",
+      404
+    );
+  }
+
+  return quiz;
 };

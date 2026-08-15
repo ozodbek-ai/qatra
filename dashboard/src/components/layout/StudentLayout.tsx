@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   BookOpen,
+  GraduationCap,
   Award,
   Settings,
   LogOut,
@@ -23,6 +24,11 @@ const menu = [
     icon: LayoutDashboard,
   },
   {
+    title: "Mavjud kurslar",
+    href: "/courses",
+    icon: GraduationCap,
+  },
+  {
     title: "Mening kurslarim",
     href: "/my-courses",
     icon: BookOpen,
@@ -42,8 +48,7 @@ const menu = [
 export default function StudentLayout() {
   const navigate = useNavigate();
 
-  const { user, logout } =
-    useAuthStore();
+  const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
     logout();
@@ -63,52 +68,59 @@ export default function StudentLayout() {
       .toUpperCase() ?? "U";
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-background)]">
+    <div className="flex h-screen overflow-hidden bg-slate-100 text-slate-900">
 
-      {/* Sidebar */}
-      <aside className="hidden w-72 flex-col border-r border-[var(--color-border)] bg-[var(--color-card)] lg:flex">
+      {/* ================= SIDEBAR ================= */}
+      <aside className="hidden h-screen w-72 shrink-0 flex-col overflow-hidden border-r border-slate-700 bg-slate-950 lg:flex">
 
-        <div className="border-b border-[var(--color-border)] p-6">
-          <h1 className="text-2xl font-bold">
+        {/* Logo */}
+        <div className="shrink-0 border-b border-slate-700 px-6 py-5">
+          <h1 className="text-2xl font-bold text-white">
             Qatra
           </h1>
 
-          <p className="mt-1 text-sm text-[var(--color-muted)]">
+          <p className="mt-1 text-sm text-slate-400">
             Learning Platform
           </p>
         </div>
 
-        <nav className="flex-1 space-y-2 p-4">
-          {menu.map((item) => {
-            const Icon = item.icon;
+        {/* Menu */}
+        <nav className="flex-1 overflow-hidden p-4">
+          <div className="space-y-2">
+            {menu.map((item) => {
+              const Icon = item.icon;
 
-            return (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                className={({ isActive }) =>
-                  [
-                    "flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
-                    isActive
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white",
-                  ].join(" ")
-                }
-              >
-                <Icon size={20} />
+              return (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    [
+                      "flex items-center gap-3 rounded-xl px-4 py-3",
+                      "font-medium transition-colors duration-150",
+                      isActive
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-300 hover:bg-slate-800 hover:text-white",
+                    ].join(" ")
+                  }
+                >
+                  <Icon size={20} />
 
-                <span>
-                  {item.title}
-                </span>
-              </NavLink>
-            );
-          })}
+                  <span>
+                    {item.title}
+                  </span>
+                </NavLink>
+              );
+            })}
+          </div>
         </nav>
 
-        <div className="border-t border-[var(--color-border)] p-4">
+        {/* Logout - DOIMO PASTDA */}
+        <div className="shrink-0 border-t border-slate-700 p-4">
           <button
+            type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
           >
             <LogOut size={20} />
 
@@ -119,18 +131,18 @@ export default function StudentLayout() {
         </div>
       </aside>
 
-      {/* Main */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* ================= RIGHT SIDE ================= */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
 
         {/* Header */}
-        <header className="flex h-20 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-card)] px-6 lg:px-8">
+        <header className="flex h-20 shrink-0 items-center justify-between border-b border-slate-700 bg-slate-950 px-6 lg:px-8">
 
           <div>
-            <h1 className="text-xl font-bold">
+            <h1 className="text-xl font-bold text-white">
               Qatra
             </h1>
 
-            <p className="text-sm text-[var(--color-muted)]">
+            <p className="text-sm text-slate-400">
               Ta'lim platformasi
             </p>
           </div>
@@ -155,11 +167,12 @@ export default function StudentLayout() {
             )}
 
             <div className="hidden text-left md:block">
-              <p className="font-medium">
-                {user?.fullName ?? "Foydalanuvchi"}
+              <p className="font-medium text-white">
+                {user?.fullName ??
+                  "Foydalanuvchi"}
               </p>
 
-              <p className="text-sm text-[var(--color-muted)]">
+              <p className="text-sm text-slate-400">
                 {user?.role === "ADMIN"
                   ? "Administrator"
                   : "Student"}
@@ -168,8 +181,8 @@ export default function StudentLayout() {
           </button>
         </header>
 
-        {/* Page */}
-        <main className="flex-1">
+        {/* ================= MAIN CONTENT ================= */}
+        <main className="min-h-0 flex-1 overflow-y-auto bg-slate-100">
           <Outlet />
         </main>
 

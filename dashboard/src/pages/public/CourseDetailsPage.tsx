@@ -1,6 +1,8 @@
 import { useParams } from "react-router-dom";
 
 import { useCourse } from "@/features/courses/hooks/useCourse";
+import { useMyCourses } from "@/features/my-courses/hooks/useMyCourses";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 
 import CourseHero from "@/features/courses/components/CourseHero";
 import CourseStats from "@/features/courses/components/CourseStats";
@@ -10,13 +12,23 @@ import EnrollButton from "@/features/courses/components/EnrollButton";
 export default function CourseDetailsPage() {
   const { slug } = useParams();
 
+  const { user } = useAuthStore();
+
   const {
     data: course,
-    isLoading,
-    isError,
+    isLoading: isCourseLoading,
+    isError: isCourseError,
   } = useCourse(slug ?? "");
 
-  if (isLoading) {
+  const {
+    data: myCourses,
+    isLoading: isMyCoursesLoading,
+  } = useMyCourses(Boolean(user));
+
+  if (
+    isCourseLoading ||
+    (Boolean(user) && isMyCoursesLoading)
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         Kurs yuklanmoqda...
@@ -24,7 +36,7 @@ export default function CourseDetailsPage() {
     );
   }
 
-  if (isError || !course) {
+  if (isCourseError || !course) {
     return (
       <div className="flex min-h-screen items-center justify-center text-red-500">
         Kurs topilmadi.
@@ -32,19 +44,44 @@ export default function CourseDetailsPage() {
     );
   }
 
+  const isEnrolled =
+    myCourses?.some(
+      (enrollment) =>
+        enrollment.course.id === course.id
+    ) ?? false;
+
   return (
-    <main className="min-h-screen bg-slate-100 py-10">
+    <main className="min-h-full bg-slate-100 py-10 text-slate-900">
       <div className="mx-auto max-w-7xl space-y-8 px-6">
         <CourseHero course={course} />
 
         <CourseStats course={course} />
 
-        <LessonList lessons={course.lessons} />
+        {user ? (
+          <>
+            <LessonList
+              lessons={course.lessons ?? []}
+            />
 
-        <EnrollButton
-    courseId={course.id}
-    price={course.price}
-/>
+            <EnrollButton
+              courseId={course.id}
+              price={course.price}
+              isEnrolled={isEnrolled}
+            />
+          </>
+        ) : (
+          <div className="rounded-xl bg-white p-8 text-center shadow">
+            <h2 className="text-xl font-bold text-slate-900">
+              Darslarni ko‘rish uchun tizimga kiring
+            </h2>
+
+            <p className="mt-2 text-slate-500">
+              Kurs haqida ma'lumotlarni ko‘rishingiz mumkin.
+              Darslar ro‘yxatini ko‘rish uchun tizimga
+              kirishingiz kerak.
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );

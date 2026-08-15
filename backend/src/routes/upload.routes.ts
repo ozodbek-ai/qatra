@@ -3,11 +3,13 @@ import { Router } from "express";
 import {
   uploadVideoController,
   updateMyAvatarController,
+  uploadCourseImageController
 } from "../controllers/upload.controller.js";
 
 import {
   upload,
   uploadAvatarFile,
+  uploadCourseImage
 } from "../middlewares/upload.middleware.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -32,6 +34,13 @@ router.post(
   authMiddleware,
   uploadAvatarFile.single("avatar"),
   updateMyAvatarController
+);
+router.post(
+  "/course/image",
+  authMiddleware,
+  authorize("ADMIN"),
+  uploadCourseImage.single("image"),
+  uploadCourseImageController
 );
 
 

@@ -9,6 +9,7 @@ import {
   updateCourseController,
   getAdminCoursesController,
 } from "../controllers/course.controller.js";
+import { optionalAuthMiddleware } from "../middlewares/optionalAuth.middleware.js";
 
 import { coursePlayerController } from "../controllers/player.controller.js";
 
@@ -53,6 +54,7 @@ router.get(
 
 router.get(
   "/:slug",
+  optionalAuthMiddleware,
   getCourseBySlugController
 );
 

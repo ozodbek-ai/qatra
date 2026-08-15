@@ -6,9 +6,14 @@
 
 # Environment files
 .env
+.env.*
 
 # Node
 node_modules/
+
+# Build output
+dist/
+**/dist/
 
 # Flutter
 .dart_tool/

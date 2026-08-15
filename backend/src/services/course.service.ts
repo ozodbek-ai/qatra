@@ -57,7 +57,9 @@ export const createCourse = async (
 };
 
 export const getCourseBySlug = async (
-  slug: string
+  slug: string,
+  userId?: string,
+  role?: string
 ) => {
   const course =
     await courseRepository.findCourseBySlug(
@@ -69,6 +71,15 @@ export const getCourseBySlug = async (
       "Kurs topilmadi.",
       404
     );
+  }
+
+  // Login qilmagan foydalanuvchi
+  // faqat kurs haqida ma'lumot ko'radi.
+  if (!userId && role !== "ADMIN") {
+    return {
+      ...course,
+      lessons: [],
+    };
   }
 
   return course;

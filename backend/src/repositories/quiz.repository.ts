@@ -203,3 +203,44 @@ export const getAllQuizzes = async (
     total,
   };
 };
+export const findAdminQuizById = (
+  quizId: string
+) => {
+  return prisma.quiz.findUnique({
+    where: {
+      id: quizId,
+    },
+
+    include: {
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+
+          course: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      },
+
+      questions: {
+        include: {
+          options: {
+            select: {
+              id: true,
+              text: true,
+              isCorrect: true,
+            },
+          },
+        },
+
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+    },
+  });
+};

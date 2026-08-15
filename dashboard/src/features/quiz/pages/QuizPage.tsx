@@ -7,9 +7,9 @@ import { useQuiz } from "../hooks/useQuiz";
 import { useSubmitQuiz } from "../hooks/useSubmitQuiz";
 
 import QuestionCard from "../components/QuestionCard";
+import QuizResult from "../components/QuizResult";
 
 import type { SubmitAnswer } from "../types/quiz";
-import QuizResult from "../components/QuizResult";
 
 export default function QuizPage() {
   const { quizId } = useParams();
@@ -25,42 +25,68 @@ export default function QuizPage() {
   const [answers, setAnswers] =
     useState<SubmitAnswer[]>([]);
 
+  /* =========================
+     LOADING
+  ========================= */
+
   if (isLoading) {
     return (
-      <div className="p-6">
-        Yuklanmoqda...
-      </div>
+      <main className="min-h-full bg-slate-100 text-slate-900">
+        <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center">
+          <p className="text-slate-600">
+            Yuklanmoqda...
+          </p>
+        </div>
+      </main>
     );
   }
+
+  /* =========================
+     QUIZ NOT FOUND
+  ========================= */
 
   if (!quiz) {
     return (
-      <div className="p-6">
-        Quiz topilmadi.
-      </div>
+      <main className="min-h-full bg-slate-100 text-slate-900">
+        <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center">
+          <p className="text-red-600">
+            Quiz topilmadi.
+          </p>
+        </div>
+      </main>
     );
   }
 
+  /* =========================
+     QUIZ RESULT
+  ========================= */
+
   if (submitQuiz.data) {
-  return (
-    <div className="mx-auto max-w-3xl p-6">
-      <QuizResult
-        score={submitQuiz.data.score}
-        total={submitQuiz.data.total}
-        percentage={
-          submitQuiz.data.percentage
-        }
-        passed={
-          submitQuiz.data.passed
-        }
-        onRetry={() => {
-          submitQuiz.reset();
-          setAnswers([]);
-        }}
-      />
-    </div>
-  );
-}
+    return (
+      <main className="min-h-full bg-slate-100 text-slate-900">
+        <div className="mx-auto max-w-3xl p-6 lg:p-8">
+          <QuizResult
+            score={submitQuiz.data.score}
+            total={submitQuiz.data.total}
+            percentage={
+              submitQuiz.data.percentage
+            }
+            passed={
+              submitQuiz.data.passed
+            }
+            onRetry={() => {
+              submitQuiz.reset();
+              setAnswers([]);
+            }}
+          />
+        </div>
+      </main>
+    );
+  }
+
+  /* =========================
+     SELECT ANSWER
+  ========================= */
 
   const handleSelect = (
     questionId: string,
@@ -83,16 +109,14 @@ export default function QuizPage() {
           questionId
       );
 
-      // SINGLE — faqat bitta javob
+      /* SINGLE */
       if (question.type === "SINGLE") {
-        const filtered = prev.filter(
-          (item) =>
-            item.questionId !==
-            questionId
-        );
-
         return [
-          ...filtered,
+          ...prev.filter(
+            (item) =>
+              item.questionId !==
+              questionId
+          ),
           {
             questionId,
             optionIds: [optionId],
@@ -100,7 +124,8 @@ export default function QuizPage() {
         ];
       }
 
-      // MULTIPLE — bir nechta javob
+      /* MULTIPLE */
+
       const currentOptionIds =
         existing?.optionIds ?? [];
 
@@ -120,7 +145,7 @@ export default function QuizPage() {
               optionId,
             ];
 
-      // Barcha tanlovlar olib tashlandi
+      /* Barcha variantlar olib tashlandi */
       if (newOptionIds.length === 0) {
         return prev.filter(
           (item) =>
@@ -129,14 +154,12 @@ export default function QuizPage() {
         );
       }
 
-      const filtered = prev.filter(
-        (item) =>
-          item.questionId !==
-          questionId
-      );
-
       return [
-        ...filtered,
+        ...prev.filter(
+          (item) =>
+            item.questionId !==
+            questionId
+        ),
         {
           questionId,
           optionIds: newOptionIds,
@@ -144,6 +167,10 @@ export default function QuizPage() {
       ];
     });
   };
+
+  /* =========================
+     CHECK ANSWERS
+  ========================= */
 
   const isAllAnswered =
     quiz.questions.every(
@@ -154,75 +181,136 @@ export default function QuizPage() {
             question.id
         );
 
-        return Boolean(
-          answer &&
-            answer.optionIds.length > 0
+        return (
+          answer !== undefined &&
+          answer.optionIds.length > 0
         );
       }
     );
 
+  /* =========================
+     SUBMIT
+  ========================= */
+
   const handleSubmit = () => {
-    if (!isAllAnswered) {
+    if (
+      !isAllAnswered ||
+      submitQuiz.isPending
+    ) {
       return;
     }
 
     submitQuiz.mutate(answers);
   };
 
+  /* =========================
+     PAGE
+  ========================= */
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">
-          {quiz.title || "Quiz"}
-        </h1>
+    <main className="min-h-full bg-slate-100 text-slate-900">
+      <div className="mx-auto max-w-4xl space-y-6 p-6 lg:p-8">
 
-        {quiz.description && (
-          <p className="mt-2 text-[var(--color-muted)]">
-            {quiz.description}
-          </p>
-        )}
+        {/* ================= HEADER ================= */}
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h1 className="text-2xl font-bold text-slate-900">
+            {quiz.title || "Quiz"}
+          </h1>
+
+          {quiz.description && (
+            <p className="mt-2 text-slate-600">
+              {quiz.description}
+            </p>
+          )}
+
+          <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            {quiz.questions.length} ta savol
+          </div>
+        </section>
+
+        {/* ================= QUESTIONS ================= */}
+
+        <section className="space-y-5">
+          {quiz.questions.map(
+            (question) => {
+              const selectedOptions =
+                answers.find(
+                  (answer) =>
+                    answer.questionId ===
+                    question.id
+                )?.optionIds ?? [];
+
+              return (
+                <QuestionCard
+                  key={question.id}
+                  question={question}
+                  selectedOptions={
+                    selectedOptions
+                  }
+                  onSelect={
+                    handleSelect
+                  }
+                />
+              );
+            }
+          )}
+        </section>
+
+        {/* ================= SUBMIT ================= */}
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+          <div className="mb-4 flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-600">
+              Javob berilgan:
+            </span>
+
+            <span className="text-sm font-bold text-slate-900">
+              {answers.length} /{" "}
+              {quiz.questions.length}
+            </span>
+          </div>
+
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            loading={
+              submitQuiz.isPending
+            }
+            disabled={
+              !isAllAnswered ||
+              submitQuiz.isPending
+            }
+            className={[
+              "w-full",
+              "min-h-12",
+              "rounded-xl",
+              "font-semibold",
+              "text-base",
+              "transition-colors",
+              isAllAnswered
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-slate-200 text-slate-500",
+            ].join(" ")}
+          >
+            {submitQuiz.isPending
+              ? "Tekshirilmoqda..."
+              : isAllAnswered
+                ? "Quizni yakunlash"
+                : "Barcha savollarga javob bering"}
+          </Button>
+
+          {!isAllAnswered && (
+            <p className="mt-3 text-center text-sm text-slate-500">
+              Quizni yakunlash uchun barcha
+              savollarga javob bering.
+            </p>
+          )}
+
+        </section>
+
       </div>
-
-      <div className="space-y-4">
-        {quiz.questions.map(
-          (question) => {
-            const selectedOptions =
-              answers.find(
-                (answer) =>
-                  answer.questionId ===
-                  question.id
-              )?.optionIds ?? [];
-
-            return (
-              <QuestionCard
-                key={question.id}
-                question={question}
-                selectedOptions={
-                  selectedOptions
-                }
-                onSelect={
-                  handleSelect
-                }
-              />
-            );
-          }
-        )}
-      </div>
-
-      <Button
-        type="button"
-        className="w-full"
-        loading={
-          submitQuiz.isPending
-        }
-        disabled={
-          !isAllAnswered ||
-          submitQuiz.isPending
-        }
-        onClick={handleSubmit}
-      >
-        Quizni yakunlash
-      </Button>
-    </div>
+    </main>
   );
 }

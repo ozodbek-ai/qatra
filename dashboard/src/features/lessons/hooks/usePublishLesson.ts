@@ -21,15 +21,19 @@ export function usePublishLesson() {
       publishLesson(id, isPublished),
 
     onSuccess(data) {
-      toast.success(
-        data.isPublished
-          ? "Dars muvaffaqiyatli nashr qilindi."
-          : "Dars draft holatiga qaytarildi."
-      );
+  toast.success(
+    data.isPublished
+      ? "Dars muvaffaqiyatli nashr qilindi."
+      : "Dars draft holatiga qaytarildi."
+  );
 
-      queryClient.invalidateQueries({
-        queryKey: ["lessons"],
-      });
-    },
+  queryClient.invalidateQueries({
+    queryKey: ["lessons"],
+  });
+
+  queryClient.invalidateQueries({
+    queryKey: ["admin-lessons"],
+  });
+},
   });
 }

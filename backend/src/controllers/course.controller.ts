@@ -31,7 +31,9 @@ export const getCourseBySlugController =
 
     const course =
       await courseService.getCourseBySlug(
-        slug
+        slug,
+        req.user?.userId,
+        req.user?.role
       );
 
     res.status(200).json({

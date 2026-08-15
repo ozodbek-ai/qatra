@@ -46,7 +46,47 @@ export const createLessonSchema = z.object({
 });
 
 export const updateLessonSchema =
-  createLessonSchema.partial();
+  z.object({
+    title: z
+      .string()
+      .trim()
+      .min(
+        3,
+        "Dars nomi kamida 3 ta belgidan iborat bo'lishi kerak."
+      )
+      .max(
+        150,
+        "Dars nomi 150 ta belgidan oshmasligi kerak."
+      )
+      .optional(),
+
+    description: z
+      .string()
+      .trim()
+      .max(5000)
+      .optional(),
+
+    videoUrl: z
+      .string()
+      .url("Video URL noto'g'ri.")
+      .optional(),
+
+    duration: z
+      .number()
+      .int()
+      .positive()
+      .optional(),
+
+    order: z
+      .number()
+      .int()
+      .positive()
+      .optional(),
+
+    isPreview: z
+      .boolean()
+      .optional(),
+  });
 
 export const lessonIdSchema =
   z.object({
