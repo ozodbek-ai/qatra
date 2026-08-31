@@ -2,9 +2,9 @@ export interface CourseFormData {
   title: string;
   slug: string;
   description: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   price: number;
-  category?: string;
+  category?: string | null;
   duration?: number;
   level:
     | "BEGINNER"

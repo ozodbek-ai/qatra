@@ -20,7 +20,15 @@ export const authorize =
       );
     }
 
-    if (!roles.includes(req.user.role)) {
+    const isSuperAdmin =
+  req.user.role === "SUPER_ADMIN";
+
+const hasRequiredRole =
+  roles.includes(req.user.role) ||
+  (isSuperAdmin &&
+    roles.includes("ADMIN"));
+
+if (!hasRequiredRole) {
       logger.warn({
         message: "Access denied",
         userId: req.user.userId,

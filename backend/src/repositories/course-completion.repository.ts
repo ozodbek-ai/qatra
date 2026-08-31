@@ -48,6 +48,7 @@ export const getCourseQuizzes = (
     where: {
       lesson: {
         courseId,
+        isPublished: true,
       },
     },
     select: {

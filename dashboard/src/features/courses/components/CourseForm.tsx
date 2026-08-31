@@ -128,10 +128,7 @@ export default function CourseForm({
         "/uploads/course/image",
         formData,
         {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
+          
         }
       );
 
@@ -272,43 +269,51 @@ export default function CourseForm({
       {/* Course Image */}
 
       <div className="space-y-3">
-        <label className="text-sm font-medium">
-          Kurs rasmi
-        </label>
+  <label className="text-sm font-medium">
+    Kurs rasmi
+  </label>
 
-        {imagePreview && (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-            <img
-              src={imagePreview}
-              alt="Kurs rasmi"
-              className="aspect-video w-full object-cover"
-            />
-          </div>
-        )}
+  <label
+    htmlFor="course-image"
+    className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 transition hover:border-blue-500 hover:bg-blue-50"
+  >
+    {imagePreview ? (
+      <img
+        src={imagePreview}
+        alt="Kurs rasmi"
+        className="mb-4 aspect-video w-full max-w-xl rounded-xl object-cover"
+      />
+    ) : (
+      <>
+        <div className="mb-3 text-4xl">
+          🖼️
+        </div>
 
-        <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 transition hover:border-blue-500 hover:bg-blue-50">
-          <div className="text-center">
-            <p className="font-medium text-slate-700">
-              {imageFile
-                ? imageFile.name
-                : "Kurs rasmi tanlang"}
-            </p>
+        <p className="font-medium text-slate-700">
+          Qurilmadan rasm tanlang
+        </p>
 
-            <p className="mt-1 text-sm text-slate-500">
-              JPG, PNG yoki WEBP · Maksimal 10 MB
-            </p>
-          </div>
+        <p className="mt-1 text-xs text-slate-400">
+          JPG, PNG yoki WEBP — maksimal 10 MB
+        </p>
+      </>
+    )}
 
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={
-              handleImageChange
-            }
-          />
-        </label>
-      </div>
+    <span className="mt-4 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white">
+      {imagePreview
+        ? "Boshqa rasm tanlash"
+        : "Rasm tanlash"}
+    </span>
+
+    <input
+      id="course-image"
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      className="hidden"
+      onChange={handleImageChange}
+    />
+  </label>
+</div>
 
       {/* Price */}
 

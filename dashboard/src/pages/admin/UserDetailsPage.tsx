@@ -4,11 +4,18 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button, Badge } from "@/components/ui";
 import { api } from "@/lib/axios";
 
+import { useUserActivityStats } from "@/features/settings/hooks/useUserActivityStats";
+
 interface UserDetails {
   id: string;
   fullName: string;
   email: string;
-  role: "ADMIN" | "STUDENT";
+
+  role:
+    | "ADMIN"
+    | "STUDENT"
+    | "SUPER_ADMIN";
+
   isActive: boolean;
   emailVerified: boolean;
   createdAt: string;
@@ -17,6 +24,7 @@ interface UserDetails {
   enrollments: {
     id: string;
     enrolledAt: string;
+
     course: {
       id: string;
       title: string;
@@ -28,6 +36,7 @@ interface UserDetails {
     id: string;
     certificateNo: string;
     issuedAt: string;
+
     course: {
       id: string;
       title: string;
@@ -49,7 +58,89 @@ interface UserDetails {
     completed: boolean;
     completedAt: string | null;
   }[];
+
+  activities: {
+    id: string;
+
+    type:
+      | "LOGIN"
+      | "LOGOUT"
+      | "LESSON_VIEW"
+      | "QUIZ_ATTEMPT"
+      | "COURSE_VIEW";
+
+    startedAt: string;
+    endedAt: string | null;
+    durationSeconds: number;
+
+    metadata: {
+      lessonId?: string;
+      courseId?: string;
+    } | null;
+  }[];
 }
+
+const formatDuration = (
+  seconds: number
+) => {
+  if (!seconds || seconds <= 0) {
+    return "0 daqiqa";
+  }
+
+  const hours =
+    Math.floor(seconds / 3600);
+
+  const minutes =
+    Math.floor(
+      (seconds % 3600) / 60
+    );
+
+  if (hours > 0) {
+    return `${hours} soat ${minutes} daqiqa`;
+  }
+
+  return `${minutes} daqiqa`;
+};
+
+const formatDateTime = (
+  value: string
+) => {
+  return new Date(value).toLocaleString(
+    "uz-UZ"
+  );
+};
+
+const formatDate = (
+  value: string
+) => {
+  return new Date(value).toLocaleDateString(
+    "uz-UZ"
+  );
+};
+
+const getActivityLabel = (
+  type: UserDetails["activities"][number]["type"]
+) => {
+  switch (type) {
+    case "LOGIN":
+      return "Tizimga kirdi";
+
+    case "LOGOUT":
+      return "Tizimdan chiqdi";
+
+    case "LESSON_VIEW":
+      return "Dars ko‘rdi";
+
+    case "QUIZ_ATTEMPT":
+      return "Quiz ishladi";
+
+    case "COURSE_VIEW":
+      return "Kursni ko‘rdi";
+
+    default:
+      return "Faoliyat";
+  }
+};
 
 export default function UserDetailsPage() {
   const { id } = useParams();
@@ -64,6 +155,14 @@ export default function UserDetailsPage() {
   const [error, setError] =
     useState("");
 
+  const {
+    data: activityStats,
+    isLoading:
+      activityStatsLoading,
+    isError:
+      activityStatsError,
+  } = useUserActivityStats(id);
+
   useEffect(() => {
     if (!id) {
       setError("User ID topilmadi.");
@@ -74,18 +173,21 @@ export default function UserDetailsPage() {
     const loadUser = async () => {
       try {
         setLoading(true);
+        setError("");
 
         const response =
           await api.get<{
             success: boolean;
             data: UserDetails;
-          }>(`/admin/users/${id}`);
+          }>(
+            `/admin/users/${id}`
+          );
 
         setUser(response.data.data);
       } catch (err: any) {
         setError(
           err?.response?.data?.message ||
-            "Foydalanuvchi ma'lumotlarini yuklab bo'lmadi."
+            "Foydalanuvchi ma'lumotlarini yuklab bo‘lmadi."
         );
       } finally {
         setLoading(false);
@@ -128,6 +230,18 @@ export default function UserDetailsPage() {
       (item) => item.completed
     ).length;
 
+  const totalLessonProgress =
+    user.lessonProgress.length;
+
+  const lessonCompletionRate =
+    totalLessonProgress === 0
+      ? 0
+      : Math.round(
+          (completedLessons /
+            totalLessonProgress) *
+            100
+        );
+
   const averageQuizScore =
     user.quizAttempts.length === 0
       ? 0
@@ -142,6 +256,7 @@ export default function UserDetailsPage() {
 
   return (
     <div className="p-6 md:p-8">
+
       {/* Header */}
 
       <div className="mb-8 flex items-start justify-between gap-4">
@@ -166,20 +281,25 @@ export default function UserDetailsPage() {
 
         <Badge
           variant={
-            user.role === "ADMIN"
-              ? "success"
-              : "info"
+            user.role === "SUPER_ADMIN"
+              ? "warning"
+              : user.role === "ADMIN"
+                ? "success"
+                : "info"
           }
         >
-          {user.role === "ADMIN"
-            ? "Admin"
-            : "Student"}
+          {user.role === "SUPER_ADMIN"
+            ? "Bosh admin"
+            : user.role === "ADMIN"
+              ? "Admin"
+              : "Student"}
         </Badge>
       </div>
 
-      {/* Statistics */}
+      {/* Main Statistics */}
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
           <p className="text-sm text-[var(--color-muted)]">
             Kurslar
@@ -192,11 +312,16 @@ export default function UserDetailsPage() {
 
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
           <p className="text-sm text-[var(--color-muted)]">
-            Tugatilgan darslar
+            Dars progressi
           </p>
 
           <p className="mt-2 text-3xl font-bold">
-            {completedLessons}
+            {lessonCompletionRate}%
+          </p>
+
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
+            {completedLessons} /{" "}
+            {totalLessonProgress} dars
           </p>
         </div>
 
@@ -212,18 +337,279 @@ export default function UserDetailsPage() {
 
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
           <p className="text-sm text-[var(--color-muted)]">
-            O'rtacha quiz
+            O‘rtacha quiz
           </p>
 
           <p className="mt-2 text-3xl font-bold">
             {averageQuizScore}%
           </p>
         </div>
+
       </div>
 
-      {/* User information */}
+      {/* Activity Statistics */}
 
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+
+        <div className="border-b border-[var(--color-border)] p-6">
+
+          <h2 className="text-lg font-semibold">
+            Foydalanuvchi faolligi
+          </h2>
+
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            Tizimga kirish va dars ko‘rish statistikasi.
+          </p>
+
+        </div>
+
+        {activityStatsLoading ? (
+          <div className="p-8 text-center text-[var(--color-muted)]">
+            Faollik statistikasi yuklanmoqda...
+          </div>
+        ) : activityStatsError ? (
+          <div className="p-8 text-center text-red-500">
+            Faollik statistikasini yuklab bo‘lmadi.
+          </div>
+        ) : (
+          <>
+
+            {/* Weekly Login Indicator */}
+
+            <div className="border-b border-[var(--color-border)] p-6">
+
+              <div className="flex items-center justify-between gap-4">
+
+                <div>
+                  <h3 className="text-sm font-semibold">
+                    Haftalik kirish
+                  </h3>
+
+                  <p className="mt-1 text-xs text-[var(--color-muted)]">
+                    Foydalanuvchining shu haftadagi tizimga kirish kunlari.
+                  </p>
+                </div>
+
+                <span className="text-sm font-medium text-[var(--color-muted)]">
+                  {activityStats?.logins.week ?? 0} ta kirish
+                </span>
+
+              </div>
+
+              <div className="mt-6 grid grid-cols-7 gap-2">
+
+                {activityStats?.loginDays?.map(
+                  (day) => (
+                    <div
+                      key={day.date}
+                      className="flex min-w-0 flex-col items-center gap-2"
+                    >
+
+                      <div
+                        className={`h-3.5 w-3.5 rounded-full transition-colors ${
+                          day.loggedIn
+                            ? "bg-blue-500"
+                            : "bg-gray-300"
+                        }`}
+                        title={
+                          day.loggedIn
+                            ? `${day.day} — tizimga kirgan`
+                            : `${day.day} — tizimga kirmagan`
+                        }
+                      />
+
+                      <span className="text-xs text-[var(--color-muted)]">
+                        {day.day}
+                      </span>
+
+                    </div>
+                  )
+                )}
+
+              </div>
+
+              <div className="mt-4 flex items-center justify-center gap-5 text-xs text-[var(--color-muted)]">
+
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                  Kirgan
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+                  Kirmagan
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Activity Cards */}
+
+            <div className="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-3">
+
+              <div className="rounded-xl bg-[var(--color-background)] p-5">
+                <p className="text-sm text-[var(--color-muted)]">
+                  Bugungi kirishlar
+                </p>
+
+                <p className="mt-2 text-3xl font-bold">
+                  {activityStats?.logins.today ?? 0}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-[var(--color-background)] p-5">
+                <p className="text-sm text-[var(--color-muted)]">
+                  Haftalik kirishlar
+                </p>
+
+                <p className="mt-2 text-3xl font-bold">
+                  {activityStats?.logins.week ?? 0}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-[var(--color-background)] p-5">
+                <p className="text-sm text-[var(--color-muted)]">
+                  Oylik kirishlar
+                </p>
+
+                <p className="mt-2 text-3xl font-bold">
+                  {activityStats?.logins.month ?? 0}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-[var(--color-background)] p-5">
+                <p className="text-sm text-[var(--color-muted)]">
+                  Bugungi dars vaqti
+                </p>
+
+                <p className="mt-2 text-2xl font-bold">
+                  {formatDuration(
+                    activityStats?.lessonDuration.today ?? 0
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-[var(--color-background)] p-5">
+                <p className="text-sm text-[var(--color-muted)]">
+                  Haftalik dars vaqti
+                </p>
+
+                <p className="mt-2 text-2xl font-bold">
+                  {formatDuration(
+                    activityStats?.lessonDuration.week ?? 0
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-[var(--color-background)] p-5">
+                <p className="text-sm text-[var(--color-muted)]">
+                  Oylik dars vaqti
+                </p>
+
+                <p className="mt-2 text-2xl font-bold">
+                  {formatDuration(
+                    activityStats?.lessonDuration.month ?? 0
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-[var(--color-background)] p-5">
+                <p className="text-sm text-[var(--color-muted)]">
+                  Jami ko‘rilgan darslar
+                </p>
+
+                <p className="mt-2 text-3xl font-bold">
+                  {activityStats?.totalLessonsViewed ?? 0}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-[var(--color-background)] p-5 sm:col-span-2 lg:col-span-2">
+                <p className="text-sm text-[var(--color-muted)]">
+                  Jami dars ko‘rish vaqti
+                </p>
+
+                <p className="mt-2 text-3xl font-bold">
+                  {formatDuration(
+                    activityStats?.lessonDuration.total ?? 0
+                  )}
+                </p>
+              </div>
+
+            </div>
+
+          </>
+        )}
+
+      </div>
+
+      {/* Recent Activity */}
+
+      <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+
+        <div className="border-b border-[var(--color-border)] p-6">
+
+          <h2 className="text-lg font-semibold">
+            So‘nggi faoliyat
+          </h2>
+
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            Foydalanuvchining oxirgi faoliyatlari.
+          </p>
+
+        </div>
+
+        {user.activities.length === 0 ? (
+          <div className="p-8 text-center text-[var(--color-muted)]">
+            Faoliyat ma'lumotlari mavjud emas.
+          </div>
+        ) : (
+          <div className="divide-y">
+
+            {user.activities
+              .slice(0, 20)
+              .map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-center justify-between gap-4 p-5"
+                >
+
+                  <div>
+                    <p className="font-medium">
+                      {getActivityLabel(
+                        activity.type
+                      )}
+                    </p>
+
+                    <p className="mt-1 text-sm text-[var(--color-muted)]">
+                      {formatDateTime(
+                        activity.startedAt
+                      )}
+                    </p>
+                  </div>
+
+                  {activity.type ===
+                    "LESSON_VIEW" &&
+                    activity.durationSeconds > 0 && (
+                      <Badge variant="info">
+                        {formatDuration(
+                          activity.durationSeconds
+                        )}
+                      </Badge>
+                    )}
+
+                </div>
+              ))}
+
+          </div>
+        )}
+
+      </div>
+
+      {/* User Information */}
+
+      <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
             Foydalanuvchi ma'lumotlari
@@ -231,9 +617,10 @@ export default function UserDetailsPage() {
         </div>
 
         <div className="grid gap-6 p-6 md:grid-cols-2">
+
           <div>
             <p className="text-sm text-[var(--color-muted)]">
-              To'liq ism
+              To‘liq ism
             </p>
 
             <p className="mt-1 font-medium">
@@ -265,19 +652,19 @@ export default function UserDetailsPage() {
             >
               {user.emailVerified
                 ? "Ha"
-                : "Yo'q"}
+                : "Yo‘q"}
             </Badge>
           </div>
 
           <div>
             <p className="text-sm text-[var(--color-muted)]">
-              Ro'yxatdan o'tgan
+              Ro‘yxatdan o‘tgan
             </p>
 
             <p className="mt-1 font-medium">
-              {new Date(
+              {formatDate(
                 user.createdAt
-              ).toLocaleDateString("uz-UZ")}
+              )}
             </p>
           </div>
 
@@ -288,18 +675,21 @@ export default function UserDetailsPage() {
 
             <p className="mt-1 font-medium">
               {user.lastLoginAt
-                ? new Date(
+                ? formatDateTime(
                     user.lastLoginAt
-                  ).toLocaleString("uz-UZ")
+                  )
                 : "Hali kirmagan"}
             </p>
           </div>
+
         </div>
+
       </div>
 
       {/* Courses */}
 
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
             Yozilgan kurslar
@@ -308,41 +698,47 @@ export default function UserDetailsPage() {
 
         {user.enrollments.length === 0 ? (
           <div className="p-8 text-center text-[var(--color-muted)]">
-            Foydalanuvchi hali kursga
-            yozilmagan.
+            Foydalanuvchi hali kursga yozilmagan.
           </div>
         ) : (
           <div className="divide-y">
+
             {user.enrollments.map(
               (enrollment) => (
                 <div
                   key={enrollment.id}
                   className="flex items-center justify-between gap-4 p-5"
                 >
+
                   <div>
                     <p className="font-medium">
-                      {enrollment.course.title}
+                      {
+                        enrollment.course
+                          .title
+                      }
                     </p>
 
                     <p className="mt-1 text-sm text-[var(--color-muted)]">
                       Yozilgan sana:{" "}
-                      {new Date(
+                      {formatDate(
                         enrollment.enrolledAt
-                      ).toLocaleDateString(
-                        "uz-UZ"
                       )}
                     </p>
                   </div>
+
                 </div>
               )
             )}
+
           </div>
         )}
+
       </div>
 
-      {/* Quiz attempts */}
+      {/* Quiz Attempts */}
 
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
             Quiz natijalari
@@ -355,12 +751,14 @@ export default function UserDetailsPage() {
           </div>
         ) : (
           <div className="divide-y">
+
             {user.quizAttempts.map(
               (attempt) => (
                 <div
                   key={attempt.id}
                   className="flex items-center justify-between gap-4 p-5"
                 >
+
                   <div>
                     <p className="font-medium">
                       Natija
@@ -373,10 +771,8 @@ export default function UserDetailsPage() {
                     </p>
 
                     <p className="mt-1 text-xs text-[var(--color-muted)]">
-                      {new Date(
+                      {formatDateTime(
                         attempt.createdAt
-                      ).toLocaleString(
-                        "uz-UZ"
                       )}
                     </p>
                   </div>
@@ -389,19 +785,23 @@ export default function UserDetailsPage() {
                     }
                   >
                     {attempt.passed
-                      ? "O'tgan"
+                      ? "O‘tgan"
                       : "Yiqilgan"}
                   </Badge>
+
                 </div>
               )
             )}
+
           </div>
         )}
+
       </div>
 
       {/* Certificates */}
 
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
             Sertifikatlar
@@ -414,14 +814,19 @@ export default function UserDetailsPage() {
           </div>
         ) : (
           <div className="divide-y">
+
             {user.certificates.map(
               (certificate) => (
                 <div
                   key={certificate.id}
                   className="p-5"
                 >
+
                   <p className="font-medium">
-                    {certificate.course.title}
+                    {
+                      certificate.course
+                        .title
+                    }
                   </p>
 
                   <p className="mt-1 text-sm">
@@ -435,22 +840,24 @@ export default function UserDetailsPage() {
 
                   <p className="mt-1 text-sm text-[var(--color-muted)]">
                     Berilgan sana:{" "}
-                    {new Date(
+                    {formatDate(
                       certificate.issuedAt
-                    ).toLocaleDateString(
-                      "uz-UZ"
                     )}
                   </p>
+
                 </div>
               )
             )}
+
           </div>
         )}
+
       </div>
 
-      {/* Lesson progress */}
+      {/* Lesson Progress */}
 
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
             Dars progressi
@@ -463,12 +870,14 @@ export default function UserDetailsPage() {
           </div>
         ) : (
           <div className="divide-y">
+
             {user.lessonProgress.map(
               (progress) => (
                 <div
                   key={progress.id}
                   className="flex items-center justify-between p-5"
                 >
+
                   <div>
                     <p className="font-medium">
                       Lesson ID:{" "}
@@ -478,10 +887,8 @@ export default function UserDetailsPage() {
                     {progress.completedAt && (
                       <p className="mt-1 text-sm text-[var(--color-muted)]">
                         Tugatilgan:{" "}
-                        {new Date(
+                        {formatDateTime(
                           progress.completedAt
-                        ).toLocaleString(
-                          "uz-UZ"
                         )}
                       </p>
                     )}
@@ -498,12 +905,16 @@ export default function UserDetailsPage() {
                       ? "Tugatilgan"
                       : "Jarayonda"}
                   </Badge>
+
                 </div>
               )
             )}
+
           </div>
         )}
+
       </div>
+
     </div>
   );
 }

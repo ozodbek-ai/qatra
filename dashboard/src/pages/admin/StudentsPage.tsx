@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users } from "lucide-react";
+import {
+  Users,
+  CheckCircle2,
+  Award,
+  CircleOff,
+} from "lucide-react";
 
 import { Button, Input } from "@/components/ui";
 import { api } from "@/lib/axios";
@@ -10,14 +15,23 @@ interface Student {
   fullName: string;
   email: string;
   joinedAt: string;
+  isActive: boolean;
+  lastLoginAt: string | null;
+
   enrolledCourses: number;
+  completedCourses: number;
+  completedLessons: number;
   quizAttempts: number;
+  certificates: number;
+  reviews: number;
 }
 
 interface StudentsResponse {
   success: boolean;
+
   data: {
     items: Student[];
+
     pagination: {
       page: number;
       limit: number;
@@ -49,8 +63,8 @@ export default function StudentsPage() {
     useState(1);
 
   const loadStudents = async (
-    currentPage = page,
-    currentSearch = search
+    currentPage = 1,
+    currentSearch = ""
   ) => {
     try {
       setLoading(true);
@@ -63,6 +77,7 @@ export default function StudentsPage() {
             params: {
               page: currentPage,
               limit: 10,
+
               ...(currentSearch.trim()
                 ? {
                     search:
@@ -73,17 +88,21 @@ export default function StudentsPage() {
           }
         );
 
-      setStudents(
-        response.data.data.items
-      );
+      const data =
+        response.data.data;
+
+      setStudents(data.items);
 
       setTotalPages(
-        response.data.data.pagination
-          .totalPages
+        data.pagination.totalPages
+      );
+
+      setPage(
+        data.pagination.page
       );
     } catch (err: any) {
       setError(
-        err?.response?.data?.message ||
+        err?.response?.data?.message ??
           "Studentlarni yuklab bo'lmadi."
       );
     } finally {
@@ -91,13 +110,11 @@ export default function StudentsPage() {
     }
   };
 
-  // Sahifa ochilganda
   useEffect(() => {
-  loadStudents(1, "");
-}, []);
+    loadStudents(1, "");
+  }, []);
 
   const handleSearch = () => {
-    setPage(1);
     loadStudents(1, search);
   };
 
@@ -111,16 +128,31 @@ export default function StudentsPage() {
       return;
     }
 
-    setPage(nextPage);
-
     loadStudents(
       nextPage,
       search
     );
   };
 
+  const formatDate = (
+    date: string | null
+  ) => {
+    if (!date) {
+      return "Hali kirmagan";
+    }
+
+    return new Date(
+      date
+    ).toLocaleDateString(
+      "uz-UZ"
+    );
+  };
+
   return (
     <div className="p-6 md:p-8">
+
+      {/* Header */}
+
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">
@@ -129,7 +161,8 @@ export default function StudentsPage() {
 
           <p className="mt-2 text-[var(--color-muted)]">
             Platformadagi studentlarni
-            boshqarish.
+            boshqarish va ularning
+            o‘quv faoliyatini kuzatish.
           </p>
         </div>
 
@@ -138,11 +171,15 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      <div className="mb-6 flex gap-3">
+      {/* Search */}
+
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <Input
           value={search}
           onChange={(e) =>
-            setSearch(e.target.value)
+            setSearch(
+              e.target.value
+            )
           }
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -154,11 +191,14 @@ export default function StudentsPage() {
         />
 
         <Button
+          type="button"
           onClick={handleSearch}
         >
           Qidirish
         </Button>
       </div>
+
+      {/* Error */}
 
       {error && (
         <div className="mb-6 rounded-xl border border-red-300 bg-red-50 p-4 text-red-700">
@@ -166,16 +206,20 @@ export default function StudentsPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-        <table className="w-full">
+      {/* Table */}
+
+      <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
+        <table className="w-full min-w-[1000px]">
+
           <thead>
             <tr className="border-b border-[var(--color-border)]">
+
               <th className="p-4 text-left">
                 Student
               </th>
 
               <th className="p-4 text-left">
-                Email
+                Holat
               </th>
 
               <th className="p-4 text-center">
@@ -183,24 +227,38 @@ export default function StudentsPage() {
               </th>
 
               <th className="p-4 text-center">
+                Tugallangan
+              </th>
+
+              <th className="p-4 text-center">
+                Darslar
+              </th>
+
+              <th className="p-4 text-center">
                 Quizlar
               </th>
 
+              <th className="p-4 text-center">
+                Sertifikat
+              </th>
+
               <th className="p-4 text-left">
-                Qo'shilgan sana
+                Qo‘shilgan sana
               </th>
 
               <th className="p-4 text-center">
                 Amal
               </th>
+
             </tr>
           </thead>
 
           <tbody>
+
             {loading ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={9}
                   className="p-10 text-center"
                 >
                   Yuklanmoqda...
@@ -209,7 +267,7 @@ export default function StudentsPage() {
             ) : students.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={9}
                   className="p-10 text-center text-[var(--color-muted)]"
                 >
                   Studentlar topilmadi.
@@ -220,44 +278,115 @@ export default function StudentsPage() {
                 (student) => (
                   <tr
                     key={student.id}
-                    className="border-b border-[var(--color-border)] last:border-b-0"
+                    className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-slate-50/50"
                   >
+
+                    {/* Student */}
+
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full border font-semibold">
+
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border font-semibold">
                           {student.fullName
                             .charAt(0)
                             .toUpperCase()}
                         </div>
 
-                        <span className="font-medium">
-                          {student.fullName}
-                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">
+                            {student.fullName}
+                          </p>
+
+                          <p className="truncate text-sm text-[var(--color-muted)]">
+                            {student.email}
+                          </p>
+                        </div>
+
                       </div>
                     </td>
 
-                    <td className="p-4 text-[var(--color-muted)]">
-                      {student.email}
+                    {/* Holat */}
+
+                    <td className="p-4">
+                      {student.isActive ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Aktiv
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                          <CircleOff className="h-3.5 w-3.5" />
+                          Bloklangan
+                        </span>
+                      )}
                     </td>
 
+                    {/* Kurslar */}
+
                     <td className="p-4 text-center">
-                      {student.enrolledCourses}
+                      <span className="font-semibold">
+                        {student.enrolledCourses}
+                      </span>
                     </td>
+
+                    {/* Tugallangan kurslar */}
+
+                    <td className="p-4 text-center">
+                      <span className="font-semibold text-green-600">
+                        {student.completedCourses}
+                      </span>
+                    </td>
+
+                    {/* Darslar */}
+
+                    <td className="p-4 text-center">
+                      {student.completedLessons}
+                    </td>
+
+                    {/* Quizlar */}
 
                     <td className="p-4 text-center">
                       {student.quizAttempts}
                     </td>
 
-                    <td className="p-4">
-                      {new Date(
-                        student.joinedAt
-                      ).toLocaleDateString(
-                        "uz-UZ"
-                      )}
+                    {/* Sertifikat */}
+
+                    <td className="p-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Award className="h-4 w-4 text-yellow-600" />
+
+                        <span>
+                          {student.certificates}
+                        </span>
+                      </div>
                     </td>
+
+                    {/* Sana */}
+
+                    <td className="p-4">
+                      <div>
+                        <p>
+                          {formatDate(
+                            student.joinedAt
+                          )}
+                        </p>
+
+                        {student.lastLoginAt && (
+                          <p className="mt-1 text-xs text-[var(--color-muted)]">
+                            Oxirgi kirish:{" "}
+                            {formatDate(
+                              student.lastLoginAt
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Action */}
 
                     <td className="p-4 text-center">
                       <Button
+                        type="button"
                         variant="outline"
                         onClick={() =>
                           navigate(
@@ -265,27 +394,34 @@ export default function StudentsPage() {
                           )
                         }
                       >
-                        Ko'rish
+                        Ko‘rish
                       </Button>
                     </td>
+
                   </tr>
                 )
               )
             )}
+
           </tbody>
         </table>
       </div>
 
+      {/* Pagination */}
+
       {!loading &&
         students.length > 0 && (
-          <div className="mt-5 flex items-center justify-between">
+          <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
             <p className="text-sm text-[var(--color-muted)]">
               Sahifa {page} /{" "}
               {totalPages}
             </p>
 
             <div className="flex gap-2">
+
               <Button
+                type="button"
                 variant="outline"
                 disabled={page <= 1}
                 onClick={() =>
@@ -298,6 +434,7 @@ export default function StudentsPage() {
               </Button>
 
               <Button
+                type="button"
                 variant="outline"
                 disabled={
                   page >= totalPages
@@ -310,9 +447,12 @@ export default function StudentsPage() {
               >
                 Keyingi →
               </Button>
+
             </div>
+
           </div>
         )}
+
     </div>
   );
 }

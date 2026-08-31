@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma.js";
-
+import * as challengeService from "./challenge.service.js";
 import * as courseCompletionService from "./course-completion.service.js";
 import * as progressRepository from "../repositories/progress.repository.js";
 import * as enrollmentRepository from "../repositories/enrollment.repository.js";
@@ -15,19 +15,20 @@ export const completeLesson = async (
   userId: string,
   lessonId: string
 ) => {
-  const lesson =
-    await prisma.lesson.findUnique({
-      where: {
-        id: lessonId,
-      },
-      include: {
-        quiz: {
-          select: {
-            id: true,
-          },
+const lesson =
+  await prisma.lesson.findUnique({
+    where: {
+      id: lessonId,
+      isPublished: true,
+    },
+    include: {
+      quiz: {
+        select: {
+          id: true,
         },
       },
-    });
+    },
+  });
 
   if (!lesson) {
     throw new AppError(
@@ -99,6 +100,54 @@ export const completeLesson = async (
     userId,
     lesson.courseId
   );
+  await challengeService.updateUserCourseChallenges(
+  userId,
+  lesson.courseId
+);
+
+
+  /*
+   * =========================================
+   * CHALLENGE PROGRESS UPDATE
+   * =========================================
+   *
+   * User ushbu kurs bo'yicha faol challenge
+   * ichida qatnashayotgan bo'lsa, score yangilanadi.
+   */
+
+  const activeChallenges =
+    await prisma.challenge.findMany({
+      where: {
+        courseId: lesson.courseId,
+
+        status: "ACCEPTED",
+
+        OR: [
+          {
+            challengerId: userId,
+          },
+          {
+            opponentId: userId,
+          },
+        ],
+      },
+
+      select: {
+        id: true,
+      },
+    });
+
+
+  await Promise.all(
+    activeChallenges.map(
+      async (challenge) => {
+        await challengeService.completeChallenge(
+          challenge.id
+        );
+      }
+    )
+  );
+
 
   return result;
 };

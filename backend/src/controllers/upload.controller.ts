@@ -7,13 +7,10 @@ import {
 } from "../services/upload.service.js";
 
 import { AppError } from "../utils/AppError.js";
-
 import { prisma } from "../lib/prisma.js";
-
 
 export const uploadVideoController =
   asyncHandler(async (req, res) => {
-
     if (!req.file) {
       throw new AppError(
         "Video fayl topilmadi.",
@@ -22,23 +19,18 @@ export const uploadVideoController =
     }
 
     const result =
-      await uploadVideo(req.file) as {
-        secure_url: string;
-      };
+      await uploadVideo(req.file);
 
     res.json({
       success: true,
-
       data: {
         url: result.secure_url,
       },
     });
   });
 
-
 export const updateMyAvatarController =
   asyncHandler(async (req, res) => {
-
     if (!req.file) {
       throw new AppError(
         "Avatar rasmi topilmadi.",
@@ -47,9 +39,7 @@ export const updateMyAvatarController =
     }
 
     const result =
-      await uploadAvatar(req.file) as {
-        secure_url: string;
-      };
+      await uploadAvatar(req.file);
 
     const user =
       await prisma.user.update({
@@ -81,7 +71,7 @@ export const updateMyAvatarController =
     });
   });
 
-  export const uploadCourseImageController =
+export const uploadCourseImageController =
   asyncHandler(async (req, res) => {
     if (!req.file) {
       throw new AppError(
@@ -91,12 +81,11 @@ export const updateMyAvatarController =
     }
 
     const result =
-      await uploadCourseImage(req.file) as {
-        secure_url: string;
-      };
+      await uploadCourseImage(req.file);
 
     res.json({
       success: true,
+
       data: {
         url: result.secure_url,
       },

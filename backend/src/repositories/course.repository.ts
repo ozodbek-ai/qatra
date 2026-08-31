@@ -193,3 +193,38 @@ export const findPublishedCourseById = (
     },
   });
 };
+
+export const findAdminCourseById = (
+  id: string
+) => {
+  return prisma.course.findUnique({
+    where: {
+      id,
+    },
+
+    include: {
+      _count: {
+        select: {
+          lessons: true,
+          enrollments: true,
+          reviews: true,
+        },
+      },
+    },
+  });
+};
+
+export const updateCourseActiveStatus = (
+  courseId: string,
+  isActive: boolean
+) => {
+  return prisma.course.update({
+    where: {
+      id: courseId,
+    },
+
+    data: {
+      isActive,
+    },
+  });
+};

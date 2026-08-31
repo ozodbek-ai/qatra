@@ -1,27 +1,44 @@
 import { useForm } from "react-hook-form";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+} from "@/components/ui";
+
 import { useLogin } from "@/features/auth/hooks/useLogin";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 
 import type { LoginRequest } from "@/types/auth";
 
 export default function LoginPage() {
-  const { register, handleSubmit } =
-    useForm<LoginRequest>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginRequest>({
+    mode: "onSubmit",
+  });
 
   const loginMutation = useLogin();
 
-  const isAuthenticated =
-    useAuthStore(
-      (state) => state.isAuthenticated
-    );
+  const {
+    isAuthenticated,
+    user,
+  } = useAuthStore();
 
   if (isAuthenticated) {
+    const isAdmin =
+      user?.role === "ADMIN" ||
+      user?.role === "SUPER_ADMIN";
+
     return (
       <Navigate
-        to="/dashboard"
+        to={isAdmin ? "/admin" : "/dashboard"}
         replace
       />
     );
@@ -44,34 +61,103 @@ export default function LoginPage() {
 
         <CardContent>
           <form
-            onSubmit={handleSubmit(
-              onSubmit
-            )}
+            onSubmit={handleSubmit(onSubmit)}
             className="space-y-5"
+            noValidate
           >
-            <Input
-              placeholder="Email"
-              type="email"
-              {...register("email")}
-            />
+            <div className="space-y-2">
+              <Input
+                placeholder="Email"
+                type="email"
+                autoComplete="email"
+                variant={
+                  errors.email
+                    ? "error"
+                    : "default"
+                }
+                aria-invalid={Boolean(
+                  errors.email
+                )}
+                aria-describedby={
+                  errors.email
+                    ? "email-error"
+                    : undefined
+                }
+                {...register("email", {
+                  required:
+                    "Iltimos, emailni kiriting",
+                })}
+              />
 
-            <Input
-              placeholder="Password"
-              type="password"
-              {...register(
-                "password"
+              {errors.email && (
+                <p
+                  id="email-error"
+                  className="text-sm text-red-500"
+                  role="alert"
+                >
+                  {errors.email.message}
+                </p>
               )}
-            />
+            </div>
+
+            <div className="space-y-2">
+              <Input
+                placeholder="Parol"
+                type="password"
+                autoComplete="current-password"
+                variant={
+                  errors.password
+                    ? "error"
+                    : "default"
+                }
+                aria-invalid={Boolean(
+                  errors.password
+                )}
+                aria-describedby={
+                  errors.password
+                    ? "password-error"
+                    : undefined
+                }
+                {...register("password", {
+                  required:
+                    "Iltimos, parolni kiriting",
+                })}
+              />
+
+              {errors.password && (
+                <p
+                  id="password-error"
+                  className="text-sm text-red-500"
+                  role="alert"
+                >
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
 
             <Button
               type="submit"
               className="w-full"
-              loading={
-                loginMutation.isPending
-              }
+              loading={loginMutation.isPending}
             >
-              Login
+              Tizimga kirish
             </Button>
+
+            <div className="flex items-center justify-between text-sm">
+              <Link
+                to="/register"
+                className="font-semibold text-[var(--color-primary)] hover:underline"
+              >
+                Hisobingiz yo'qmi?
+              </Link>
+
+              <Link
+                to="/forgot-password"
+                className="font-semibold text-[var(--color-primary)] hover:underline"
+              >
+                Parolni unutdingizmi?
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>

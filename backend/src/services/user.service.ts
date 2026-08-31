@@ -76,12 +76,58 @@ export const getUserById = async (
   return user;
 };
 
-export const updateRole = (
-  userId: string,
-  data: UpdateRoleInput
+export const updateRole = async (
+  targetUserId: string,
+  data: UpdateRoleInput,
+  currentUserId: string
 ) => {
+  const currentUser =
+    await userRepository.getUserRoleById(
+      currentUserId
+    );
+
+  if (!currentUser) {
+    throw new AppError(
+      "Foydalanuvchi topilmadi.",
+      404
+    );
+  }
+
+  if (
+    currentUser.role !==
+    "SUPER_ADMIN"
+  ) {
+    throw new AppError(
+      "Faqat bosh admin foydalanuvchilar rolini o'zgartira oladi.",
+      403
+    );
+  }
+
+  if (
+    targetUserId ===
+    currentUserId
+  ) {
+    throw new AppError(
+      "O'z rolingizni o'zgartira olmaysiz.",
+      400
+    );
+  }
+
+  const targetUser =
+    await userRepository.getUserRoleById(
+      targetUserId
+    );
+
+  if (!targetUser) {
+    throw new AppError(
+      "Foydalanuvchi topilmadi.",
+      404
+    );
+  }
+
+
   return userRepository.updateUserRole(
-    userId,
+    targetUserId,
     data.role
   );
 };
@@ -212,4 +258,47 @@ export const changePassword = async (
   );
 
   return null;
+};
+
+export const getUserActivityStats = async (
+  userId: string
+) => {
+  const user =
+    await userRepository.getUserRoleById(userId);
+
+  if (!user) {
+    throw new AppError(
+      "Foydalanuvchi topilmadi.",
+      404
+    );
+  }
+
+  const now = new Date();
+
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const startOfWeek = new Date(startOfToday);
+
+  const day = startOfWeek.getDay();
+
+  const daysFromMonday =
+    day === 0 ? 6 : day - 1;
+
+  startOfWeek.setDate(
+    startOfWeek.getDate() - daysFromMonday
+  );
+
+  const startOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1
+  );
+
+  return userRepository.getUserActivityStats(
+    userId,
+    startOfToday,
+    startOfWeek,
+    startOfMonth
+  );
 };

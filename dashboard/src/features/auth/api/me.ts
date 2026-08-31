@@ -1,19 +1,21 @@
 import { api } from "@/lib/axios";
-import type { ApiResponse } from "@/types/api";
 
-interface MeResponse {
+export interface MeResponse {
   userId: string;
   fullName: string;
   email: string;
-  role: "ADMIN" | "STUDENT";
+  role:
+    | "STUDENT"
+    | "ADMIN"
+    | "SUPER_ADMIN";
   avatarUrl: string | null;
 }
 
-export async function me() {
-  const response =
-    await api.get<ApiResponse<MeResponse>>(
-      "/auth/me"
-    );
+export async function me(): Promise<MeResponse> {
+  const response = await api.get<{
+    success: boolean;
+    data: MeResponse;
+  }>("/auth/me");
 
-  return response.data;
+  return response.data.data;
 }

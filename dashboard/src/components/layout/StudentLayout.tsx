@@ -5,6 +5,9 @@ import {
   Award,
   Settings,
   LogOut,
+  Clapperboard,
+  Swords,
+  MessageCircle,
 } from "lucide-react";
 
 import {
@@ -33,6 +36,21 @@ const menu = [
     href: "/my-courses",
     icon: BookOpen,
   },
+  {
+    title: "Reels",
+    href: "/reels",
+    icon: Clapperboard,
+  },
+  {
+  title: "Xabarlar",
+  href: "/chat",
+  icon: MessageCircle,
+},
+  {
+  title: "Musobaqalar",
+  href: "/challenges",
+  icon: Swords,
+},
   {
     title: "Sertifikatlar",
     href: "/certificates",
@@ -69,7 +87,6 @@ export default function StudentLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100 text-slate-900">
-
       {/* ================= SIDEBAR ================= */}
       <aside className="hidden h-screen w-72 shrink-0 flex-col overflow-hidden border-r border-slate-700 bg-slate-950 lg:flex">
 
@@ -85,7 +102,7 @@ export default function StudentLayout() {
         </div>
 
         {/* Menu */}
-        <nav className="flex-1 overflow-hidden p-4">
+        <nav className="flex-1 overflow-y-auto p-4">
           <div className="space-y-2">
             {menu.map((item) => {
               const Icon = item.icon;
@@ -115,7 +132,7 @@ export default function StudentLayout() {
           </div>
         </nav>
 
-        {/* Logout - DOIMO PASTDA */}
+        {/* Logout */}
         <div className="shrink-0 border-t border-slate-700 p-4">
           <button
             type="button"

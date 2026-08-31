@@ -1,3 +1,8 @@
+export type UserRole =
+  | "STUDENT"
+  | "ADMIN"
+  | "SUPER_ADMIN";
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -13,7 +18,7 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
-  role: "ADMIN" | "STUDENT";
+  role: "STUDENT" | "ADMIN" | "SUPER_ADMIN";
   avatarUrl: string | null;
 }
 

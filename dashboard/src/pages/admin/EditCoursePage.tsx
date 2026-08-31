@@ -1,11 +1,37 @@
-import { useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import CourseForm from "@/features/courses/components/CourseForm";
+import { useAdminCourse } from "@/features/courses/hooks/useAdminCourse";
 
 export default function EditCoursePage() {
-  const location = useLocation();
+  const { id } = useParams();
 
-  const course = location.state?.course;
+  const {
+    data: course,
+    isLoading,
+    isError,
+  } = useAdminCourse(id ?? "");
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-3xl p-8">
+        <p className="text-[var(--color-muted)]">
+          Kurs ma'lumotlari yuklanmoqda...
+        </p>
+      </div>
+    );
+  }
+
+  if (isError || !course) {
+    return (
+      <div className="mx-auto max-w-3xl p-8">
+        <div className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-700">
+          Kurs topilmadi yoki ma'lumotlarni
+          yuklab bo'lmadi.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -19,7 +45,9 @@ export default function EditCoursePage() {
         </p>
       </div>
 
-      <CourseForm initialData={course} />
+      <CourseForm
+        initialData={course}
+      />
     </div>
   );
 }

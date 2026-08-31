@@ -10,36 +10,45 @@ interface Props {
 export default function AuthProvider({
   children,
 }: Props) {
-  const token =
-    useAuthStore(
-      (state) => state.accessToken
-    );
+  const token = useAuthStore(
+    (state) => state.accessToken
+  );
 
-  const setUser =
-    useAuthStore(
-      (state) => state.setUser
-    );
+  const setUser = useAuthStore(
+    (state) => state.setUser
+  );
 
-  const logout =
-    useAuthStore(
-      (state) => state.logout
-    );
+  const logout = useAuthStore(
+    (state) => state.logout
+  );
 
-  const { data, isError } =
-    useMe();
+  const setLoading = useAuthStore(
+    (state) => state.setLoading
+  );
+
+  const {
+    data,
+    isError,
+    isLoading,
+  } = useMe();
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-   if (data) {
-  setUser({
-    id: data.data.userId,
-    fullName: data.data.fullName,
-    email: data.data.email,
-    role: data.data.role,
-    avatarUrl: data.data.avatarUrl,
-  });
-}
+    setLoading(isLoading);
+
+    if (data) {
+      setUser({
+        id: data.userId,
+        fullName: data.fullName,
+        email: data.email,
+        role: data.role,
+        avatarUrl: data.avatarUrl,
+      });
+    }
 
     if (isError) {
       logout();
@@ -48,9 +57,11 @@ export default function AuthProvider({
     token,
     data,
     isError,
-    logout,
+    isLoading,
     setUser,
+    logout,
+    setLoading,
   ]);
 
-  return children;
+  return <>{children}</>;
 }

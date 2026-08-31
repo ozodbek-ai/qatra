@@ -1,72 +1,101 @@
 import * as adminDashboardRepository from "../repositories/admin-dashboard.repository.js";
 
 export const getDashboardOverview = async () => {
+  const [
+    overview,
+    quiz,
+    latestStudents,
+    latestEnrollments,
+    courseStatistics,
+  ] = await Promise.all([
+    adminDashboardRepository.getOverview(),
 
-  const overview =
-    await adminDashboardRepository.getOverview();
+    adminDashboardRepository.getQuizStatistics(),
 
-  const latestStudents =
-    await adminDashboardRepository.getLatestStudents();
+    adminDashboardRepository.getLatestStudents(),
 
-  let averageScore = 0;
+    adminDashboardRepository.getLatestEnrollments(),
 
-  if (overview.quizAttempts.length > 0) {
+    adminDashboardRepository.getCourseStatistics(),
+  ]);
 
-    const totalPercentage =
-      overview.quizAttempts.reduce(
-        (sum, item) => {
+  const completionRate =
+    overview.enrollments === 0
+      ? 0
+      : Math.round(
+          (overview.completedCourses /
+            overview.enrollments) *
+            100
+        );
 
-          if (item.total === 0) {
-            return sum;
-          }
-
-          return (
-            sum +
-            (item.score / item.total) * 100
-          );
-
-        },
-        0
-      );
-
-    averageScore = Math.round(
-      totalPercentage /
-      overview.quizAttempts.length
-    );
-  }
+  const quizPassRate =
+    overview.quizAttempts === 0
+      ? 0
+      : Math.round(
+          (overview.passedQuizAttempts /
+            overview.quizAttempts) *
+            100
+        );
 
   return {
-
     overview: {
+      students:
+        overview.students,
 
-      students: overview.students,
+      activeStudents:
+        overview.activeStudents,
 
-      admins: overview.admins,
+      admins:
+        overview.admins,
 
-      courses: overview.courses,
+      courses:
+        overview.courses,
 
-      lessons: overview.lessons,
+      lessons:
+        overview.lessons,
 
-      quizzes: overview.quizzes,
+      quizzes:
+        overview.quizzes,
 
-      enrollments: overview.enrollments,
+      enrollments:
+        overview.enrollments,
 
       completedLessons:
         overview.completedLessons,
 
+      completedCourses:
+        overview.completedCourses,
+
+      certificates:
+        overview.certificates,
     },
 
     quiz: {
-
       attempts:
-        overview.quizAttempts.length,
+        overview.quizAttempts,
 
-      averageScore,
+      passedAttempts:
+        overview.passedQuizAttempts,
 
+      averageScore:
+        quiz.averageScore,
+
+      passRate:
+        quizPassRate,
+    },
+
+    completion: {
+      completedCourses:
+        overview.completedCourses,
+
+      completionRate,
     },
 
     latestStudents,
 
-  };
+    latestEnrollments,
 
+    popularCourses:
+      courseStatistics,
+  };
 };

@@ -51,7 +51,8 @@ export const updateUserRoleController =
     const data =
       await userService.updateRole(
         req.params.id as string,
-        body
+        body,
+        req.user!.userId
       );
 
     res.json({
@@ -166,5 +167,18 @@ export const changePasswordController =
       message:
         "Parol muvaffaqiyatli o'zgartirildi.",
       data: null,
+    });
+  });
+
+  export const getUserActivityStatsController =
+  asyncHandler(async (req, res) => {
+    const data =
+      await userService.getUserActivityStats(
+        req.params.id as string
+      );
+
+    res.json({
+      success: true,
+      data,
     });
   });

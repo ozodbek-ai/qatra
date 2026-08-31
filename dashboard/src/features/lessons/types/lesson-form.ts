@@ -5,7 +5,7 @@ export interface LessonFormData {
 
   description: string;
 
-  video: FileList;
+  video?: FileList;
 
   duration: number;
 

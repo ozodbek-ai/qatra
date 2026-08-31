@@ -14,6 +14,7 @@ interface Props {
   percentage: number;
   passed: boolean;
   onRetry?: () => void;
+  courseId?: string;
 }
 
 export default function QuizResult({
@@ -22,8 +23,18 @@ export default function QuizResult({
   percentage,
   passed,
   onRetry,
+  courseId,
 }: Props) {
   const navigate = useNavigate();
+
+  const handleContinue = () => {
+    if (courseId) {
+      navigate(`/player/${courseId}`);
+      return;
+    }
+
+    navigate("/my-courses");
+  };
 
   return (
     <Card>
@@ -33,36 +44,37 @@ export default function QuizResult({
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        <p>
-          Ball:{" "}
-          <strong>
-            {score}
-          </strong>{" "}
-          / {total}
-        </p>
+      <CardContent className="space-y-5">
 
-        <p>
-          Foiz:{" "}
-          <strong>
+        <div className="rounded-xl bg-slate-50 p-5 text-center">
+          <p className="text-sm text-slate-500">
+            Natijangiz
+          </p>
+
+          <p className="mt-2 text-4xl font-bold text-slate-900">
             {percentage}%
-          </strong>
-        </p>
+          </p>
+
+          <p className="mt-1 text-slate-600">
+            {score} / {total} ta to‘g‘ri javob
+          </p>
+        </div>
 
         <div
-          className={`inline-flex rounded-full px-4 py-2 text-white ${
+          className={`rounded-xl px-4 py-3 text-center font-semibold ${
             passed
-              ? "bg-green-600"
-              : "bg-red-600"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
           }`}
         >
           {passed
-            ? "Muvaffaqiyatli"
-            : "Yiqildingiz"}
+            ? "🎉 Quiz muvaffaqiyatli topshirildi!"
+            : "Quizdan o'ta olmadingiz."}
         </div>
 
         {!passed && (
           <Button
+            type="button"
             className="w-full"
             onClick={onRetry}
           >
@@ -70,15 +82,27 @@ export default function QuizResult({
           </Button>
         )}
 
+        {passed && (
+          <Button
+            type="button"
+            className="w-full bg-blue-600 text-white hover:bg-blue-700"
+            onClick={handleContinue}
+          >
+            Keyingi darsga o'tish →
+          </Button>
+        )}
+
         <Button
+          type="button"
           className="w-full"
           variant="outline"
           onClick={() =>
             navigate("/my-courses")
           }
         >
-          Kurslarga qaytish
+          Mening kurslarim
         </Button>
+
       </CardContent>
     </Card>
   );

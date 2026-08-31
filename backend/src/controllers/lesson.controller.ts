@@ -92,8 +92,10 @@ export const updateLessonController = asyncHandler(
         ? Number(req.body.order)
         : undefined,
       isPreview:
-        req.body.isPreview === "true" ||
-        req.body.isPreview === true,
+  req.body.isPreview !== undefined
+    ? req.body.isPreview === "true" ||
+      req.body.isPreview === true
+    : undefined,
     });
 
     const lesson =

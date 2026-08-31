@@ -1,4 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { createCourse } from "../api/createCourse";
@@ -15,8 +18,12 @@ export function useCreateCourse() {
       );
 
       queryClient.invalidateQueries({
-      queryKey: ["courses"],
-    });
+        queryKey: ["admin-courses"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["courses"],
+      });
     },
   });
 }

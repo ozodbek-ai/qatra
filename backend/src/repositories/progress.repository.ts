@@ -18,12 +18,15 @@ export const createProgress = (
   userId: string,
   lessonId: string
 ) => {
+  const now = new Date();
+
   return prisma.lessonProgress.create({
     data: {
       userId,
       lessonId,
       completed: true,
-      completedAt: new Date(),
+      completedAt: now,
+      lastViewedAt: now,
     },
   });
 };
@@ -32,6 +35,8 @@ export const updateProgress = (
   userId: string,
   lessonId: string
 ) => {
+  const now = new Date();
+
   return prisma.lessonProgress.update({
     where: {
       userId_lessonId: {
@@ -39,12 +44,15 @@ export const updateProgress = (
         lessonId,
       },
     },
+
     data: {
       completed: true,
-      completedAt: new Date(),
+      completedAt: now,
+      lastViewedAt: now,
     },
   });
 };
+
 export const countCompletedLessons = (
   userId: string,
   lessonIds: string[]
@@ -59,6 +67,7 @@ export const countCompletedLessons = (
     },
   });
 };
+
 export const getCompletedLessonIds = (
   userId: string,
   lessonIds: string[]
@@ -71,11 +80,13 @@ export const getCompletedLessonIds = (
       },
       completed: true,
     },
+
     select: {
       lessonId: true,
     },
   });
 };
+
 export const getAllProgress = async (
   skip: number,
   take: number,

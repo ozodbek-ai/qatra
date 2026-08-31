@@ -49,3 +49,52 @@ export const findCompletedLessons = (
     },
   });
 };
+
+export const findLastViewedLesson = (
+  userId: string,
+  lessonIds: string[]
+) => {
+  return prisma.lessonProgress.findFirst({
+    where: {
+      userId,
+      lessonId: {
+        in: lessonIds,
+      },
+    },
+
+    orderBy: {
+      lastViewedAt: "desc",
+    },
+
+    select: {
+      lessonId: true,
+      completed: true,
+      lastViewedAt: true,
+    },
+  });
+};
+
+export const updateLastViewedLesson = async (
+  userId: string,
+  lessonId: string
+) => {
+  return prisma.lessonProgress.upsert({
+    where: {
+      userId_lessonId: {
+        userId,
+        lessonId,
+      },
+    },
+
+    update: {
+      lastViewedAt: new Date(),
+    },
+
+    create: {
+      userId,
+      lessonId,
+      completed: false,
+      lastViewedAt: new Date(),
+    },
+  });
+};

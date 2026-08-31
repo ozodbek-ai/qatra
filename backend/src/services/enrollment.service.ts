@@ -56,10 +56,88 @@ export const enroll = async (
 export const getMyCourses = async (
   userId: string
 ) => {
-  return enrollmentRepository.getUserEnrollments(
-    userId
-  );
+  const enrollments =
+    await enrollmentRepository.getUserEnrollments(
+      userId
+    );
+
+  return enrollments.map((enrollment) => {
+    const totalLessons =
+      enrollment.course.lessons.length;
+
+    const completedLessons =
+      enrollment.course.lessons.filter(
+        (lesson) =>
+          lesson.progress.length > 0
+      ).length;
+
+    const progress =
+      totalLessons === 0
+        ? 0
+        : Math.round(
+            (completedLessons /
+              totalLessons) *
+              100
+          );
+
+    return {
+      id: enrollment.id,
+
+      enrolledAt:
+        enrollment.enrolledAt,
+
+      course: {
+        id: enrollment.course.id,
+        title: enrollment.course.title,
+        slug: enrollment.course.slug,
+        description:
+          enrollment.course.description,
+        imageUrl:
+          enrollment.course.imageUrl,
+
+        price: Number(
+          enrollment.course.price
+        ),
+
+        level:
+          enrollment.course.level,
+
+        isPublished:
+          enrollment.course.isPublished,
+
+        totalLessons,
+
+        completedLessons,
+
+        progress,
+
+        /*
+         * Kurs tugatilganmi?
+         */
+        completions:
+          enrollment.course.completions.map(
+            (completion) => ({
+              id: completion.id,
+              completedAt:
+                completion.completedAt,
+            })
+          ),
+
+        /*
+         * Studentning ushbu kursdagi
+         * mavjud baholari.
+         */
+        reviews:
+          enrollment.course.reviews.map(
+            (review) => ({
+              rating: review.rating,
+            })
+          ),
+      },
+    };
+  });
 };
+
 export const getAllEnrollments = async (
   query: PaginationQuery
 ) => {

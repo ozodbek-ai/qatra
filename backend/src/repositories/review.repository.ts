@@ -18,43 +18,103 @@ export const findReview = (
   });
 };
 
-export const createReview = (
+export const createReview = async (
   userId: string,
   data: CreateReviewInput
 ) => {
-  return prisma.review.create({
-    data: {
-      userId,
-      courseId: data.courseId,
-      rating: data.rating,
-      comment: data.comment,
-    },
-  });
+  const review =
+    await prisma.review.create({
+      data: {
+        userId,
+        courseId: data.courseId,
+        rating: data.rating,
+        comment: data.comment,
+      },
+    });
+
+  await updateCourseAverageRating(
+    data.courseId
+  );
+
+  return review;
 };
 
-export const updateReview = (
+export const updateReview = async (
   reviewId: string,
   data: UpdateReviewInput
 ) => {
-  return prisma.review.update({
+  const review =
+    await prisma.review.update({
+      where: {
+        id: reviewId,
+      },
+      data: {
+        rating: data.rating,
+        comment: data.comment,
+      },
+    });
+
+  await updateCourseAverageRating(
+    review.courseId
+  );
+
+  return review;
+};
+
+const updateCourseAverageRating = async (
+  courseId: string
+) => {
+  const result =
+    await prisma.review.aggregate({
+      where: {
+        courseId,
+      },
+      _avg: {
+        rating: true,
+      },
+    });
+
+  const averageRating =
+    result._avg.rating ?? 0;
+
+  await prisma.course.update({
     where: {
-      id: reviewId,
+      id: courseId,
     },
     data: {
-      rating: data.rating,
-      comment: data.comment,
+      averageRating,
     },
   });
 };
 
-export const deleteReview = (
+
+
+export const deleteReview = async (
   reviewId: string
 ) => {
-  return prisma.review.delete({
+  const review =
+    await prisma.review.findUnique({
+      where: {
+        id: reviewId,
+      },
+      select: {
+        courseId: true,
+      },
+    });
+
+  if (!review) {
+    return;
+  }
+
+  await prisma.review.delete({
     where: {
       id: reviewId,
     },
   });
+
+  await updateCourseAverageRating(
+    review.courseId
+  );
 };
 
 export const getCourseReviews = (

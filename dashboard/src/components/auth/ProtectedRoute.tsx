@@ -1,22 +1,73 @@
-import { Navigate } from "react-router-dom";
+import {
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 
 import { useAuthStore } from "@/features/auth/store/auth.store";
 
-interface ProtectedRouteProps {
+type UserRole =
+  | "STUDENT"
+  | "ADMIN"
+  | "SUPER_ADMIN";
+
+interface Props {
   children: React.ReactNode;
+
+  allowedRoles?: UserRole[];
 }
 
 export default function ProtectedRoute({
   children,
-}: ProtectedRouteProps) {
-  const isAuthenticated = useAuthStore(
-    (state) => state.isAuthenticated
-  );
+  allowedRoles,
+}: Props) {
+  const location = useLocation();
 
-  if (!isAuthenticated) {
+  const {
+    user,
+    isAuthenticated,
+  } = useAuthStore();
+
+  /*
+   * Token yoki foydalanuvchi mavjud emas.
+   */
+  if (!isAuthenticated || !user) {
     return (
       <Navigate
         to="/login"
+        replace
+        state={{
+          from:
+            location.pathname +
+            location.search,
+        }}
+      />
+    );
+  }
+
+  /*
+   * Role-based access control.
+   */
+  if (
+    allowedRoles &&
+    !allowedRoles.includes(
+      user.role as UserRole
+    )
+  ) {
+    if (
+      user.role === "ADMIN" ||
+      user.role === "SUPER_ADMIN"
+    ) {
+      return (
+        <Navigate
+          to="/admin"
+          replace
+        />
+      );
+    }
+
+    return (
+      <Navigate
+        to="/dashboard"
         replace
       />
     );

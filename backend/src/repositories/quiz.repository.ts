@@ -32,6 +32,7 @@ export const findQuizWithQuestions = (
     include: {
       lesson: {
         select: {
+          id: true,
           courseId: true,
         },
       },

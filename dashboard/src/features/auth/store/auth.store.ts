@@ -4,8 +4,12 @@ import type { User } from "@/types/auth";
 
 interface AuthState {
   accessToken: string | null;
+
   user: User | null;
+
   isAuthenticated: boolean;
+
+  isLoading: boolean;
 
   login: (
     accessToken: string,
@@ -14,38 +18,72 @@ interface AuthState {
 
   logout: () => void;
 
-  setUser: (user: User | null) => void;
+  setUser: (
+    user: User | null
+  ) => void;
+
+  setLoading: (
+    isLoading: boolean
+  ) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  accessToken: localStorage.getItem("accessToken"),
+export const useAuthStore =
+  create<AuthState>((set) => ({
+    accessToken:
+      localStorage.getItem(
+        "accessToken"
+      ),
 
-  user: null,
+    user: null,
 
-  isAuthenticated: !!localStorage.getItem("accessToken"),
+    isAuthenticated:
+      !!localStorage.getItem(
+        "accessToken"
+      ),
 
-  login: (accessToken, user) => {
-    localStorage.setItem("accessToken", accessToken);
+    isLoading: !!localStorage.getItem(
+      "accessToken"
+    ),
 
-    set({
+    login: (
       accessToken,
-      user,
-      isAuthenticated: true,
-    });
-  },
+      user
+    ) => {
+      localStorage.setItem(
+        "accessToken",
+        accessToken
+      );
 
-  logout: () => {
-    localStorage.removeItem("accessToken");
+      set({
+        accessToken,
+        user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    },
 
-    set({
-      accessToken: null,
-      user: null,
-      isAuthenticated: false,
-    });
-  },
+    logout: () => {
+      localStorage.removeItem(
+        "accessToken"
+      );
 
-  setUser: (user) =>
-    set({
-      user,
-    }),
-}));
+      set({
+        accessToken: null,
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    },
+
+    setUser: (user) =>
+      set({
+        user,
+        isAuthenticated: !!user,
+        isLoading: false,
+      }),
+
+    setLoading: (isLoading) =>
+      set({
+        isLoading,
+      }),
+  }));

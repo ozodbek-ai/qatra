@@ -1,10 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-
 import { getCertificates } from "../api/getCertificates";
-import type { Certificate } from "../types/certificate";
 
 export const useCertificates = () => {
-  return useQuery<Certificate[]>({
+  return useQuery({
     queryKey: ["certificates"],
     queryFn: getCertificates,
   });

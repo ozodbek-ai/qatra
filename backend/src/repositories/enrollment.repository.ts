@@ -53,9 +53,44 @@ export const getUserEnrollments = (
             },
           },
 
-          reviews: {
+          lessons: {
+            where: {
+              isPublished: true,
+            },
+
             select: {
-              rating: true,
+              id: true,
+
+              progress: {
+                where: {
+                  userId,
+                  completed: true,
+                },
+
+                select: {
+                  id: true,
+                },
+              },
+            },
+          },
+
+          reviews: {
+  where: {
+    userId,
+  },
+  select: {
+    rating: true,
+  },
+},
+
+          completions: {
+            where: {
+              userId,
+            },
+
+            select: {
+              id: true,
+              completedAt: true,
             },
           },
         },

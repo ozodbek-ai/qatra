@@ -1,10 +1,13 @@
 import {
   LayoutDashboard,
   BookOpen,
-  Library,
+  GraduationCap,
   Award,
   Settings,
   LogOut,
+  Clapperboard,
+  Swords,
+  MessageCircle,
 } from "lucide-react";
 
 import {
@@ -26,12 +29,27 @@ const menu = [
   {
     title: "Mavjud kurslar",
     href: "/courses",
-    icon: Library,
+    icon: GraduationCap,
   },
   {
     title: "Mening kurslarim",
     href: "/my-courses",
     icon: BookOpen,
+  },
+  {
+    title: "Reels",
+    href: "/reels",
+    icon: Clapperboard,
+  },
+  {
+  title: "Xabarlar",
+  href: "/messages",
+  icon: MessageCircle,
+},
+  {
+    title: "Musobaqalar",
+    href: "/challenges",
+    icon: Swords,
   },
   {
     title: "Sertifikatlar",

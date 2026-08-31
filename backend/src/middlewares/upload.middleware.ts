@@ -49,3 +49,13 @@ export const uploadCourseImage = multer({
 
   fileFilter: imageFileFilter,
 });
+
+export const uploadCategoryImage = multer({
+  storage,
+
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+
+  fileFilter: imageFileFilter,
+});

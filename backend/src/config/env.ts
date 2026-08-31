@@ -34,6 +34,15 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET:
     z.string(),
 
+  SMTP_HOST: z.string(),
+SMTP_PORT: z.coerce.number().default(587),
+SMTP_USER: z.string(),
+SMTP_PASSWORD: z.string(),
+
+FRONTEND_URL: z
+  .string()
+  .default("http://localhost:5173"),
+
 });
 
 export const env =

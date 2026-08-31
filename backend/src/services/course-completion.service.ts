@@ -16,26 +16,32 @@ export const checkCourseCompletion = async (
   console.log("courseId:", courseId);
 
   // 1. Kursni olish
-  const course =
-    await prisma.course.findUnique({
-      where: {
-        id: courseId,
-      },
-      include: {
-        lessons: {
-          include: {
-            quiz: {
-              select: {
-                id: true,
-              },
+const course =
+  await prisma.course.findUnique({
+    where: {
+      id: courseId,
+      isPublished: true,
+    },
+    include: {
+      lessons: {
+        where: {
+          isPublished: true,
+        },
+
+        include: {
+          quiz: {
+            select: {
+              id: true,
             },
           },
-          orderBy: {
-            order: "asc",
-          },
+        },
+
+        orderBy: {
+          order: "asc",
         },
       },
-    });
+    },
+  });
 
   if (!course) {
     console.log(
@@ -57,15 +63,17 @@ export const checkCourseCompletion = async (
 
   // 2. Barcha lessonlar completedmi?
   const completedLessons =
-    await prisma.lessonProgress.count({
-      where: {
-        userId,
-        completed: true,
-        lesson: {
-          courseId,
-        },
+  await prisma.lessonProgress.count({
+    where: {
+      userId,
+      completed: true,
+
+      lesson: {
+        courseId,
+        isPublished: true,
       },
-    });
+    },
+  });
 
   console.log(
     "Completed lessons:",
@@ -76,6 +84,18 @@ export const checkCourseCompletion = async (
     "Required lessons:",
     course.lessons.length
   );
+
+  if (course.lessons.length === 0) {
+  console.log(
+    "❌ Course completion stopped: course has no lessons."
+  );
+
+  console.log(
+    "========================================"
+  );
+
+  return false;
+}
 
   if (
     completedLessons !==

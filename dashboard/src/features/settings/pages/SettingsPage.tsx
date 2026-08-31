@@ -1,7 +1,11 @@
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Camera, Lock, User } from "lucide-react";
-
+import {
+  Camera,
+  Lock,
+  User,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Button,
   Input,
@@ -11,6 +15,7 @@ import { useProfile } from "../hooks/useProfile";
 import { useUpdateProfile } from "../hooks/useUpdateProfile";
 import { useChangePassword } from "../hooks/useChangePassword";
 import { useUploadAvatar } from "../hooks/useUploadAvatar";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 
 type ProfileFormData = {
   fullName: string;
@@ -23,11 +28,14 @@ type PasswordFormData = {
 };
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
   const {
     data: profile,
     isLoading,
     isError,
   } = useProfile();
+
 
   const updateProfile =
     useUpdateProfile();
@@ -53,7 +61,16 @@ export default function SettingsPage() {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
     reset: resetPassword,
-  } = useForm<PasswordFormData>();
+    watch,
+    formState: {
+      errors: passwordErrors,
+    },
+  } = useForm<PasswordFormData>({
+    mode: "onSubmit",
+  });
+
+  const newPassword =
+    watch("newPassword");
 
   if (isLoading) {
     return (
@@ -207,6 +224,7 @@ export default function SettingsPage() {
               onSubmit={handleProfileSubmit(
                 onProfileSubmit
               )}
+              noValidate
             >
               <div>
                 <label className="mb-2 block text-sm font-medium">
@@ -220,7 +238,8 @@ export default function SettingsPage() {
                   {...registerProfile(
                     "fullName",
                     {
-                      required: true,
+                      required:
+                        "Iltimos, ism va familiyangizni kiriting",
                     }
                   )}
                 />
@@ -253,6 +272,42 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Admin management */}
+  {user?.role === "SUPER_ADMIN" && (
+  <section className="rounded-2xl bg-white p-6 shadow-sm">
+    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-purple-100 p-3 text-purple-600">
+          <User size={22} />
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold">
+            Adminlarni boshqarish
+          </h2>
+
+          <p className="text-sm text-slate-500">
+            Foydalanuvchilarni admin qilish
+            yoki adminlikdan chiqarish.
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() =>
+          navigate(
+            "/admin/settings/admins"
+          )
+        }
+        className="inline-flex min-h-12 items-center justify-center rounded-[14px] bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-700"
+      >
+        Adminlarni boshqarish
+      </button>
+    </div>
+  </section>
+)}
+
         {/* Password */}
         <section className="rounded-2xl bg-white p-6 shadow-sm">
           <div className="mb-6 flex items-center gap-3">
@@ -276,67 +331,186 @@ export default function SettingsPage() {
             onSubmit={handlePasswordSubmit(
               onPasswordSubmit
             )}
+            noValidate
           >
+            {/* Current password */}
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <label
+                htmlFor="currentPassword"
+                className="mb-2 block text-sm font-medium"
+              >
                 Joriy parol
               </label>
 
               <Input
+                id="currentPassword"
                 type="password"
                 placeholder="Joriy parolingiz"
+                autoComplete="current-password"
+                variant={
+                  passwordErrors.currentPassword
+                    ? "error"
+                    : "default"
+                }
+                aria-invalid={Boolean(
+                  passwordErrors.currentPassword
+                )}
                 {...registerPassword(
                   "currentPassword",
                   {
-                    required: true,
+                    required:
+                      "Iltimos, joriy parolingizni kiriting",
                   }
                 )}
               />
+
+              {passwordErrors.currentPassword && (
+                <p
+                  className="mt-1 text-sm text-red-500"
+                  role="alert"
+                >
+                  {
+                    passwordErrors
+                      .currentPassword
+                      .message
+                  }
+                </p>
+              )}
             </div>
 
+            {/* New password */}
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <label
+                htmlFor="newPassword"
+                className="mb-2 block text-sm font-medium"
+              >
                 Yangi parol
               </label>
 
               <Input
+                id="newPassword"
                 type="password"
                 placeholder="Yangi parol"
+                autoComplete="new-password"
+                variant={
+                  passwordErrors.newPassword
+                    ? "error"
+                    : "default"
+                }
+                aria-invalid={Boolean(
+                  passwordErrors.newPassword
+                )}
                 {...registerPassword(
                   "newPassword",
                   {
-                    required: true,
-                    minLength: 6,
+                    required:
+                      "Iltimos, yangi parol kiriting",
+
+                    minLength: {
+                      value: 8,
+                      message:
+                        "Yangi parol kamida 8 ta belgidan iborat bo'lishi kerak",
+                    },
+
+                    validate: (value) =>
+                      value !==
+                        watch(
+                          "currentPassword"
+                        ) ||
+                      "Yangi parol joriy paroldan farq qilishi kerak",
                   }
                 )}
               />
+
+              {passwordErrors.newPassword && (
+                <p
+                  className="mt-1 text-sm text-red-500"
+                  role="alert"
+                >
+                  {
+                    passwordErrors
+                      .newPassword
+                      .message
+                  }
+                </p>
+              )}
             </div>
 
+            {/* Confirm password */}
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <label
+                htmlFor="confirmPassword"
+                className="mb-2 block text-sm font-medium"
+              >
                 Yangi parolni tasdiqlang
               </label>
 
               <Input
+                id="confirmPassword"
                 type="password"
                 placeholder="Yangi parolni qayta kiriting"
+                autoComplete="new-password"
+                variant={
+                  passwordErrors.confirmPassword
+                    ? "error"
+                    : "default"
+                }
+                aria-invalid={Boolean(
+                  passwordErrors.confirmPassword
+                )}
                 {...registerPassword(
                   "confirmPassword",
                   {
-                    required: true,
+                    required:
+                      "Iltimos, yangi parolni tasdiqlang",
+
+                    validate: (value) =>
+                      value ===
+                        newPassword ||
+                      "Parollar bir xil emas",
                   }
                 )}
               />
+
+              {passwordErrors.confirmPassword && (
+                <p
+                  className="mt-1 text-sm text-red-500"
+                  role="alert"
+                >
+                  {
+                    passwordErrors
+                      .confirmPassword
+                      .message
+                  }
+                </p>
+              )}
             </div>
 
-            <Button
-              type="submit"
-              loading={
-                changePassword.isPending
-              }
-            >
-              Parolni o'zgartirish
-            </Button>
+           <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
+  <button
+    type="submit"
+    disabled={changePassword.isPending}
+    className="inline-flex min-h-12 min-w-[220px] items-center justify-center rounded-[14px] bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    {changePassword.isPending ? (
+      <>
+        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+        Saqlanmoqda...
+      </>
+    ) : (
+      "Parolni o'zgartirish"
+    )}
+  </button>
+
+  <button
+    type="button"
+    onClick={() => resetPassword()}
+    disabled={changePassword.isPending}
+    className="inline-flex min-h-12 items-center justify-center rounded-[14px] border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    Bekor qilish
+  </button>
+</div>
           </form>
         </section>
 

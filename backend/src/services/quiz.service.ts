@@ -82,49 +82,85 @@ export const submitQuiz = async (
     );
 
   if (!quiz) {
-  throw new AppError(
-    "Quiz topilmadi.",
-    404
-  );
-}
+    throw new AppError(
+      "Quiz topilmadi.",
+      404
+    );
+  }
 
-const enrollment =
-  await prisma.enrollment.findUnique({
-    where: {
-      userId_courseId: {
-        userId,
-        courseId: quiz.lesson.courseId,
+  /*
+   * Quiz qaysi kursga tegishli?
+   */
+  const courseId =
+    quiz.lesson.courseId;
+
+  /*
+   * Student kursga yozilganmi?
+   */
+  const enrollment =
+    await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: {
+          userId,
+          courseId,
+        },
       },
-    },
-  });
+    });
 
-if (!enrollment) {
-  throw new AppError(
-    "Siz bu kursga yozilmagansiz.",
-    403
-  );
-}
+  if (!enrollment) {
+    throw new AppError(
+      "Siz bu kursga yozilmagansiz.",
+      403
+    );
+  }
 
-const existingAttempt = 
-  await quizRepository.findQuizAttempt(
-    userId,
-    quizId
-  );
+  /*
+   * Oldingi attemptni tekshiramiz.
+   *
+   * Agar oldin muvaffaqiyatli topshirgan bo'lsa,
+   * qayta topshirishga ruxsat bermaymiz.
+   *
+   * Agar failed bo'lsa,
+   * qayta topshirish mumkin.
+   */
+  const existingAttempt =
+    await quizRepository.findQuizAttempt(
+      userId,
+      quizId
+    );
 
-if (existingAttempt?.passed) {
-  throw new AppError(
-    "Siz bu quizni allaqachon muvaffaqiyatli topshirgansiz.",
-    400
-  );
-}
+  if (existingAttempt?.passed) {
+    throw new AppError(
+      "Siz bu quizni allaqachon muvaffaqiyatli topshirgansiz.",
+      400
+    );
+  }
+
+  /*
+   * Barcha savollarga javob berilganligini tekshiramiz.
+   */
+  if (
+    data.answers.length !==
+    quiz.questions.length
+  ) {
+    throw new AppError(
+      "Barcha savollarga javob berish kerak.",
+      400
+    );
+  }
 
   let score = 0;
 
+  /*
+   * Har bir savolni tekshirish
+   */
   for (const question of quiz.questions) {
-    const answer = data.answers.find(
-      (item) =>
-        item.questionId === question.id
-    );
+    const answer =
+      data.answers.find(
+        (item) =>
+          item.questionId ===
+          question.id
+      );
 
     if (!answer) {
       continue;
@@ -136,13 +172,19 @@ if (existingAttempt?.passed) {
     const correctOptionIds =
       question.options
         .filter(
-          (option) => option.isCorrect
+          (option) =>
+            option.isCorrect
         )
         .map(
-          (option) => option.id
+          (option) =>
+            option.id
         )
         .sort();
 
+    /*
+     * Variantlar soni teng bo'lmasa,
+     * javob noto'g'ri.
+     */
     if (
       selectedOptionIds.length !==
       correctOptionIds.length
@@ -150,10 +192,15 @@ if (existingAttempt?.passed) {
       continue;
     }
 
+    /*
+     * Barcha variantlar aynan
+     * bir xil bo'lishi kerak.
+     */
     const isCorrect =
       selectedOptionIds.every(
         (id, index) =>
-          id === correctOptionIds[index]
+          id ===
+          correctOptionIds[index]
       );
 
     if (isCorrect) {
@@ -175,46 +222,74 @@ if (existingAttempt?.passed) {
     percentage >=
     quiz.passPercentage;
 
+  /*
+   * Attemptni saqlash
+   */
   await quizRepository.createQuizAttempt(
-  userId,
-  quizId,
-  score,
-  total,
-  percentage,
-  passed
-);
+    userId,
+    quizId,
+    score,
+    total,
+    percentage,
+    passed
+  );
 
-// Quiz muvaffaqiyatli topshirilgan bo'lsa,
-// kurs tugaganligini tekshiramiz.
-if (passed) {
-  const quizWithLesson =
-    await prisma.quiz.findUnique({
+  /*
+   * FAQAT quiz muvaffaqiyatli
+   * topshirilganda lesson completed.
+   */
+  if (passed) {
+    await prisma.lessonProgress.upsert({
       where: {
-        id: quizId,
-      },
-      select: {
-        lesson: {
-          select: {
-            courseId: true,
-          },
+        userId_lessonId: {
+          userId,
+          lessonId: quiz.lessonId,
         },
+      },
+
+      update: {
+        completed: true,
+        completedAt: new Date(),
+        lastViewedAt: new Date(),
+      },
+
+      create: {
+        userId,
+        lessonId: quiz.lessonId,
+        completed: true,
+        completedAt: new Date(),
+        lastViewedAt: new Date(),
       },
     });
 
-  if (quizWithLesson?.lesson.courseId) {
+    /*
+     * Kurs tugaganligini tekshiramiz.
+     *
+     * Bu funksiya:
+     *
+     * 1. Barcha lessonlar completedmi?
+     * 2. Barcha quizlar passedmi?
+     *
+     * degan savollarni tekshiradi.
+     *
+     * Ha bo'lsa:
+     *
+     * CourseCompletion yaratiladi
+     * +
+     * Certificate yaratiladi.
+     */
     await courseCompletionService.checkCourseCompletion(
       userId,
-      quizWithLesson.lesson.courseId
+      courseId
     );
   }
-}
 
-return {
-  score,
-  total,
-  percentage,
-  passed,
-};
+  return {
+    score,
+    total,
+    percentage,
+    passed,
+  };
 };
 
 
@@ -247,58 +322,73 @@ export const getQuizResult = async (
 
 
 export const getQuiz = async (
-  quizId: string
+  quizId: string,
+  userId: string,
+  role?: string
 ) => {
-  console.log(
-    "================================"
-  );
-
-  console.log(
-    "GET QUIZ REQUEST"
-  );
-
-  console.log(
-    "quizId:",
-    quizId
-  );
-
   const quiz =
     await quizRepository.findQuizById(
       quizId
     );
 
-  console.log(
-    "Quiz found:",
-    Boolean(quiz)
-  );
-
   if (!quiz) {
-    console.log(
-      "❌ QUIZ NOT FOUND IN DATABASE:",
-      quizId
-    );
-
     throw new AppError(
       "Quiz topilmadi.",
       404
     );
   }
 
-  console.log(
-    "✅ QUIZ FOUND:",
-    quiz.id
-  );
+  // Admin quizni to'liq ko'rishi mumkin.
+  if (role === "ADMIN") {
+    return {
+      ...quiz,
+      attempt: null,
+    };
+  }
 
-  console.log(
-    "Questions:",
-    quiz.questions.length
-  );
+  // Student shu kursga yozilganmi?
+  const enrollment =
+    await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: {
+          userId,
+          courseId:
+            quiz.lesson.course.id,
+        },
+      },
+    });
 
-  console.log(
-    "================================"
-  );
+  if (!enrollment) {
+    throw new AppError(
+      "Siz bu kursga yozilmagansiz.",
+      403
+    );
+  }
 
-  return quiz;
+  // Studentning ushbu quiz bo'yicha
+  // oxirgi attemptini olamiz.
+  const attempt =
+    await quizRepository.findQuizAttempt(
+      userId,
+      quizId
+    );
+
+  return {
+    ...quiz,
+
+    attempt: attempt
+      ? {
+          id: attempt.id,
+          score: attempt.score,
+          total: attempt.total,
+          percentage:
+            attempt.percentage,
+          passed: attempt.passed,
+          submittedAt:
+            attempt.createdAt,
+        }
+      : null,
+  };
 };
 
 export const getAllQuizzes = async (

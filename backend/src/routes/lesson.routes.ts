@@ -8,7 +8,7 @@ import {
   deleteLessonController,
   getAdminLessonsController,
   publishLessonController,
-  getAllAdminLessonsController
+  getAllAdminLessonsController,
 } from "../controllers/lesson.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -19,37 +19,51 @@ const router = Router();
 
 /*
 |--------------------------------------------------------------------------
-| Public Routes
+| Public / Authenticated Student
 |--------------------------------------------------------------------------
 */
 
 router.get(
   "/course/:courseId",
+  authMiddleware,
   getLessonsByCourseController
 );
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes
+| Admin
+|--------------------------------------------------------------------------
+|
+| ADMIN + SUPER_ADMIN:
+| - darslarni ko'rish
+| - dars yaratish
+| - video joylash
+| - darsni tahrirlash
+| - publish qilish
+|
+| SUPER_ADMIN:
+| - darsni o'chirish
 |--------------------------------------------------------------------------
 */
 
 router.get(
-  "/:id",
+  "/admin/all",
   authMiddleware,
-  getLessonByIdController
+  authorize("ADMIN", "SUPER_ADMIN"),
+  getAllAdminLessonsController
 );
 
-/*
-|--------------------------------------------------------------------------
-| Admin Routes
-|--------------------------------------------------------------------------
-*/
+router.get(
+  "/admin/course/:courseId",
+  authMiddleware,
+  authorize("ADMIN", "SUPER_ADMIN"),
+  getAdminLessonsController
+);
 
 router.post(
   "/",
   authMiddleware,
-  authorize("ADMIN"),
+  authorize("ADMIN", "SUPER_ADMIN"),
   upload.single("video"),
   createLessonController
 );
@@ -57,34 +71,38 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
-  authorize("ADMIN"),
+  authorize("ADMIN", "SUPER_ADMIN"),
   upload.single("video"),
   updateLessonController
 );
 
-router.delete(
-  "/:id",
-  authMiddleware,
-  authorize("ADMIN"),
-  deleteLessonController
-);
-router.get(
-  "/admin/all",
-  authMiddleware,
-  authorize("ADMIN"),
-  getAllAdminLessonsController
-);
-router.get(
-  "/admin/course/:courseId",
-  authMiddleware,
-  authorize("ADMIN"),
-  getAdminLessonsController
-);
 router.patch(
   "/:id/publish",
   authMiddleware,
-  authorize("ADMIN"),
+  authorize("ADMIN", "SUPER_ADMIN"),
   publishLessonController
+);
+
+/*
+ * Darsni o'chirish faqat SUPER_ADMIN uchun.
+ */
+router.delete(
+  "/:id",
+  authMiddleware,
+  authorize("SUPER_ADMIN"),
+  deleteLessonController
+);
+
+/*
+|--------------------------------------------------------------------------
+| Student / Authenticated User
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/:id",
+  authMiddleware,
+  getLessonByIdController
 );
 
 export default router;

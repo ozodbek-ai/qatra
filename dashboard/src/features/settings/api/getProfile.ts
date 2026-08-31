@@ -5,7 +5,10 @@ export type UserProfile = {
   id: string;
   fullName: string;
   email: string;
-  role: "STUDENT" | "ADMIN";
+  role:
+    | "STUDENT"
+    | "ADMIN"
+    | "SUPER_ADMIN";
   avatarUrl: string | null;
   emailVerified: boolean;
   createdAt: string;

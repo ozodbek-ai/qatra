@@ -206,3 +206,52 @@ export const publishCourse = async (
 
   return publishedCourse;
 };
+
+export const getAdminCourseById = async (
+  id: string
+) => {
+  const course =
+    await courseRepository.findAdminCourseById(
+      id
+    );
+
+  if (!course) {
+    throw new AppError(
+      "Kurs topilmadi.",
+      404
+    );
+  }
+
+  return course;
+};
+
+export const updateCourseActiveStatus = async (
+  courseId: string,
+  isActive: boolean
+) => {
+  const course =
+    await courseRepository.findCourseById(
+      courseId
+    );
+
+  if (!course) {
+    throw new AppError(
+      "Kurs topilmadi.",
+      404
+    );
+  }
+
+  const updatedCourse =
+    await courseRepository.updateCourseActiveStatus(
+      courseId,
+      isActive
+    );
+
+  logger.info({
+    message: "Course active status updated",
+    courseId,
+    isActive,
+  });
+
+  return updatedCourse;
+};

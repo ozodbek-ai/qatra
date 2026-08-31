@@ -20,8 +20,29 @@ export interface Quiz {
   title: string | null;
   description?: string | null;
   passPercentage: number;
+
   lessonId: string;
+
+  lesson?: {
+    id: string;
+    title: string;
+
+    course: {
+      id: string;
+      title: string;
+    };
+  };
+
   questions: QuizQuestion[];
+
+  attempt?: {
+    id: string;
+    score: number;
+    total: number;
+    percentage: number;
+    passed: boolean;
+    submittedAt: string;
+  } | null;
 }
 
 export interface SubmitAnswer {

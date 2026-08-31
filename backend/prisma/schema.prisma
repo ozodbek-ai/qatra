@@ -11,6 +11,7 @@ datasource db {
 enum UserRole {
   STUDENT
   ADMIN
+  SUPER_ADMIN
 }
 
 enum QuestionType {
@@ -18,32 +19,123 @@ enum QuestionType {
   MULTIPLE
 }
 
+enum UserActivityType {
+  LOGIN
+  LOGOUT
+  LESSON_VIEW
+  QUIZ_ATTEMPT
+  COURSE_VIEW
+}
+
+enum ChallengeStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  COMPLETED
+}
+
 model User {
-  id             String           @id @default(cuid())
-  fullName       String
-  email          String           @unique
-  password       String
-  role           UserRole         @default(STUDENT)
+  id       String   @id @default(cuid())
+  fullName String
+  email    String   @unique
+  password String
+  role     UserRole @default(STUDENT)
+
   enrollments    Enrollment[]
   quizAttempts   QuizAttempt[]
   lessonProgress LessonProgress[]
+  activities     UserActivity[]
 
   courseCompletions CourseCompletion[]
-
-  certificates Certificate[]
+  certificates      Certificate[]
 
   isActive Boolean @default(true)
 
-  avatarUrl String?
-
+  avatarUrl   String?
   lastLoginAt DateTime?
 
   reviews Review[]
 
-emailVerified Boolean @default(false)
+  reelLikes    ReelLike[]
+  reelComments ReelComment[]
+
+  emailVerified Boolean @default(false)
+
+  passwordResetTokens PasswordResetToken[]
+
+  conversations ConversationMember[]
+  sentMessages  Message[]            @relation("MessageSender")
+
+  challengesCreated  Challenge[] @relation("ChallengesCreated")
+  challengesReceived Challenge[] @relation("ChallengesReceived")
+  challengesWon      Challenge[] @relation("ChallengeWinner")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Conversation {
+  id String @id @default(cuid())
+
+  members  ConversationMember[]
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
+model ConversationMember {
+  id String @id @default(cuid())
+
+  conversationId String
+  userId         String
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt   DateTime  @default(now())
+  lastReadAt DateTime?
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model Message {
+  id String @id @default(cuid())
+
+  conversationId String
+  senderId       String
+  reelId         String?
+
+  text String?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  reel         Reel?        @relation(fields: [reelId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@index([reelId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 enum CourseLevel {
@@ -62,7 +154,7 @@ model Course {
   imageUrl String?
 
   price Decimal @db.Decimal(10, 2)
-  
+
   category String?
 
   duration Int @default(0)
@@ -83,11 +175,15 @@ model Course {
 
   isPublished Boolean @default(false)
 
+  isActive Boolean @default(true)
+
   reviews Review[]
 
+  challenges Challenge[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@index([title])
 }
 
@@ -152,7 +248,7 @@ model LessonProgress {
 }
 
 model Quiz {
-  id       String @id @default(cuid())
+  id String @id @default(cuid())
 
   lessonId String @unique
   lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
@@ -203,10 +299,10 @@ model QuizAttempt {
   id String @id @default(cuid())
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   quizId String
-  quiz   Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   score Int
   total Int
@@ -217,14 +313,15 @@ model QuizAttempt {
 
   createdAt DateTime @default(now())
 }
+
 model CourseCompletion {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  courseId    String
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   completedAt DateTime @default(now())
 
@@ -232,30 +329,32 @@ model CourseCompletion {
 
   @@unique([userId, courseId])
 }
+
 model Certificate {
   id String @id @default(cuid())
 
   certificateNo String @unique
 
   userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   courseId String
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  completionId String @unique
-  completion CourseCompletion @relation(fields: [completionId], references: [id], onDelete: Cascade)
+  completionId String           @unique
+  completion   CourseCompletion @relation(fields: [completionId], references: [id], onDelete: Cascade)
 
   issuedAt DateTime @default(now())
 }
+
 model Review {
   id String @id @default(cuid())
 
   userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   courseId String
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   rating Int
 
@@ -266,11 +365,12 @@ model Review {
 
   @@unique([userId, courseId])
 }
+
 model SiteSettings {
   id String @id @default(cuid())
 
   platformName String @default("Qatra")
-  description String @default("Learning Management System")
+  description  String @default("Learning Management System")
 
   logoUrl String?
 
@@ -280,4 +380,134 @@ model SiteSettings {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model UserActivity {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type UserActivityType
+
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  durationSeconds Int       @default(0)
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, type])
+  @@index([startedAt])
+}
+
+model Reel {
+  id String @id @default(cuid())
+
+  title       String
+  description String?
+
+  videoUrl     String
+  thumbnailUrl String?
+
+  isPublished Boolean @default(false)
+
+  categoryId String?
+
+  category ReelCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  likes    ReelLike[]
+  comments ReelComment[]
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([createdAt])
+  @@index([categoryId])
+}
+
+model ReelCategory {
+  id String @id @default(cuid())
+
+  name String @unique
+  slug String @unique
+
+  description String?
+  imageUrl    String?
+
+  reels Reel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model ReelLike {
+  id String @id @default(cuid())
+
+  userId String
+  reelId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reel Reel @relation(fields: [reelId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reelId])
+  @@index([reelId])
+}
+
+model ReelComment {
+  id String @id @default(cuid())
+
+  userId String
+  reelId String
+
+  text String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reel Reel @relation(fields: [reelId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reelId])
+  @@index([userId])
+}
+
+model Challenge {
+  id String @id @default(cuid())
+
+  challengerId String
+  opponentId   String
+  courseId     String
+
+  status ChallengeStatus @default(PENDING)
+
+  challengerScore Int @default(0)
+  opponentScore   Int @default(0)
+
+  challengerCompletedAt DateTime?
+  opponentCompletedAt   DateTime?
+
+  winnerId String?
+
+  winner User? @relation("ChallengeWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  challenger User   @relation("ChallengesCreated", fields: [challengerId], references: [id], onDelete: Cascade)
+  opponent   User   @relation("ChallengesReceived", fields: [opponentId], references: [id], onDelete: Cascade)
+  course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([challengerId])
+  @@index([opponentId])
+  @@index([courseId])
+  @@index([status])
 }

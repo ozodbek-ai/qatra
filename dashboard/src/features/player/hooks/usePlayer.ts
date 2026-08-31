@@ -8,6 +8,6 @@ export const usePlayer = (
   return useQuery({
     queryKey: ["player", courseId],
     queryFn: () => getPlayer(courseId),
-    enabled: !!courseId,
+    enabled: Boolean(courseId),
   });
 };

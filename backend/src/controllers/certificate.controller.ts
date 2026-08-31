@@ -36,3 +36,51 @@ asyncHandler(async (req, res) => {
   });
 
 });
+
+export const certificatePdfController =
+  asyncHandler(async (req, res) => {
+    const certificateId =
+      req.params.certificateId as string;
+
+    const {
+      certificate,
+      pdfBuffer,
+    } =
+      await certificateService.generateCertificatePdf(
+        req.user!.userId,
+        certificateId
+      );
+
+    const safeFileName =
+      `Qatra-Certificate-${certificate.certificateNo}.pdf`
+        .replace(/[^a-zA-Z0-9._-]/g, "_");
+
+    res.setHeader(
+      "Content-Type",
+      "application/pdf"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${safeFileName}"`
+    );
+
+    res.setHeader(
+      "Content-Length",
+      pdfBuffer.length
+    );
+
+    res.send(pdfBuffer);
+  });
+
+  export const adminCertificateStatisticsController =
+  asyncHandler(async (req, res) => {
+    const data =
+      await certificateService
+        .getAdminCertificateStatistics();
+
+    res.json({
+      success: true,
+      data,
+    });
+  });

@@ -9,14 +9,23 @@ interface GuestRouteProps {
 export default function GuestRoute({
   children,
 }: GuestRouteProps) {
-  const isAuthenticated = useAuthStore(
-    (state) => state.isAuthenticated
-  );
+  const {
+    isAuthenticated,
+    user,
+  } = useAuthStore();
 
   if (isAuthenticated) {
+    const isAdmin =
+      user?.role === "ADMIN" ||
+      user?.role === "SUPER_ADMIN";
+
     return (
       <Navigate
-        to="/dashboard"
+        to={
+          isAdmin
+            ? "/admin"
+            : "/dashboard"
+        }
         replace
       />
     );

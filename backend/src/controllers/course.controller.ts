@@ -11,7 +11,24 @@ import {
   publishCourseSchema,
   courseIdSchema,
   courseSlugSchema,
+  updateCourseActiveStatusSchema,
 } from "../validators/course.validator.js";
+
+export const getAdminCourseByIdController =
+  asyncHandler(async (req, res) => {
+    const { id } =
+      courseIdSchema.parse(req.params);
+
+    const course =
+      await courseService.getAdminCourseById(
+        id
+      );
+
+    res.status(200).json({
+      success: true,
+      data: course,
+    });
+  });
 
 export const getAllCoursesController =
   asyncHandler(async (_req: Request, res: Response) => {
@@ -148,5 +165,37 @@ export const publishCourseController =
     res.json({
       success: true,
       data: courses,
+    });
+  });
+
+  export const updateCourseActiveStatusController =
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } =
+      courseIdSchema.parse(req.params);
+
+    const data =
+      updateCourseActiveStatusSchema.parse(
+        req.body
+      );
+
+    const course =
+      await courseService.updateCourseActiveStatus(
+        id,
+        data.isActive
+      );
+
+    logger.info({
+      message: data.isActive
+        ? "Course activated"
+        : "Course deactivated",
+      courseId: id,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: data.isActive
+        ? "Kurs qayta faollashtirildi."
+        : "Kurs vaqtincha faolsizlantirildi.",
+      data: course,
     });
   });

@@ -5,7 +5,7 @@ import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.routes.js";
-
+import playerRoutes from "./routes/player.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import lessonRoutes from "./routes/lesson.routes.js";
@@ -33,6 +33,11 @@ import settingsRoutes from "./routes/settings.routes.js";
 import userProfileRoutes
   from "./routes/user-profile.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
+import reelRoutes from "./routes/reel.routes.js";
+import reelCategoryRoutes from "./routes/reel-category.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+import challengeRoutes
+  from "./routes/challenge.routes.js";
 
 
 
@@ -152,6 +157,24 @@ app.use(
 app.use(
   "/user",
   profileRoutes
+);
+app.use("/api/v1/player", playerRoutes);
+
+app.use("/api/v1/reels", reelRoutes);
+
+app.use(
+  "/api/reel-categories",
+  reelCategoryRoutes
+);
+
+app.use(
+  "/api/v1/chat",
+  chatRoutes
+);
+
+app.use(
+  "/api/v1/challenges",
+  challengeRoutes
 );
 
 // ❗ Error middleware eng oxirida bo'lishi kerak

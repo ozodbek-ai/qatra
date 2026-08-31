@@ -91,24 +91,29 @@ export default function QuestionForm({
     );
   };
 
-  const handleTypeChange = (
-    newType: QuestionType
-  ) => {
-    setType(newType);
+const handleTypeChange = (
+  newType: QuestionType
+) => {
+  setType(newType);
 
-    if (newType === "SINGLE") {
-      setOptions((prev) =>
-        prev.map((option, index) => ({
-          ...option,
-          isCorrect:
-            index ===
-            prev.findIndex(
-              (item) => item.isCorrect
-            ),
-        }))
-      );
-    }
-  };
+  if (newType === "SINGLE") {
+    setOptions((prev) => {
+      const firstCorrectIndex =
+        prev.findIndex(
+          (item) => item.isCorrect
+        );
+
+      return prev.map((option, index) => ({
+        ...option,
+        isCorrect:
+          index ===
+          (firstCorrectIndex >= 0
+            ? firstCorrectIndex
+            : 0),
+      }));
+    });
+  }
+};
 
   const addOption = () => {
     if (options.length >= 6) {

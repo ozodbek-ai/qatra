@@ -5,11 +5,15 @@ import { logger } from "../lib/logger.js";
 import {
   login,
   register,
+  forgotPassword,
+  resetPassword,
 } from "../services/auth.service.js";
 
 import {
   loginSchema,
   registerSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from "../validators/auth.validator.js";
 
 import { prisma } from "../lib/prisma.js";
@@ -58,6 +62,47 @@ export const loginController = asyncHandler(
     });
   }
 );
+export const forgotPasswordController =
+  asyncHandler(
+    async (
+      req: Request,
+      res: Response,
+    ) => {
+      const data =
+        forgotPasswordSchema.parse(
+          req.body,
+        );
+
+      await forgotPassword(data);
+
+      res.status(200).json({
+        success: true,
+        message:
+          "Agar ushbu email tizimda mavjud bo'lsa, parolni tiklash bo'yicha ko'rsatmalar yuborildi.",
+      });
+    },
+  );
+
+export const resetPasswordController =
+  asyncHandler(
+    async (
+      req: Request,
+      res: Response,
+    ) => {
+      const data =
+        resetPasswordSchema.parse(
+          req.body,
+        );
+
+      await resetPassword(data);
+
+      res.status(200).json({
+        success: true,
+        message:
+          "Parolingiz muvaffaqiyatli o'zgartirildi.",
+      });
+    },
+  );
 
 
 export const meController = asyncHandler(

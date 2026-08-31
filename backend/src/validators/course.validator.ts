@@ -35,10 +35,29 @@ export const createCourseSchema = z.object({
       "Kurs tavsifi juda uzun."
     ),
 
-  imageUrl: z
-    .string()
-    .url("Image URL noto'g'ri.")
-    .optional(),
+imageUrl: z
+  .string()
+  .trim()
+  .url("Rasm URL'i noto'g'ri.")
+  .refine(
+    (value) => {
+      try {
+        const url = new URL(value);
+
+        return (
+          url.protocol === "http:" ||
+          url.protocol === "https:"
+        );
+      } catch {
+        return false;
+      }
+    },
+    {
+      message:
+        "Rasm URL'i http yoki https bo'lishi kerak.",
+    }
+  )
+  .optional(),
 
   price: z
     .number()
@@ -90,3 +109,8 @@ export type UpdateCourseInput =
 
 export type PublishCourseInput =
   z.infer<typeof publishCourseSchema>;
+
+  export const updateCourseActiveStatusSchema =
+  z.object({
+    isActive: z.boolean(),
+  });

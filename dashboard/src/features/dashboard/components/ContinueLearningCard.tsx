@@ -1,6 +1,10 @@
+import { useNavigate } from "react-router-dom";
+
 interface Props {
   data: {
+    courseId: string;
     courseTitle: string;
+    lessonId: string;
     lessonTitle: string;
   } | null;
 }
@@ -8,21 +12,66 @@ interface Props {
 export default function ContinueLearningCard({
   data,
 }: Props) {
-  if (!data) return null;
+  const navigate = useNavigate();
+
+  if (!data) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">
+          O'qishni davom ettiring
+        </h2>
+
+        <p className="mt-2 text-slate-500">
+          Hozircha davom ettiriladigan kurs mavjud emas.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => navigate("/courses")}
+          className="mt-5 rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700"
+        >
+          Kurslarni ko'rish
+        </button>
+      </div>
+    );
+  }
+
+  const handleContinue = () => {
+    navigate(
+      `/player/${data.courseId}?lesson=${data.lessonId}`
+    );
+  };
 
   return (
-    <div className="rounded-xl bg-white p-6 shadow">
-      <h2 className="mb-4 text-xl font-semibold text-slate-900">
-        Continue Learning
-      </h2>
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="p-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-blue-600">
+              O'qishni davom ettiring
+            </p>
 
-      <p className="font-semibold text-slate-900">
-        {data.courseTitle}
-      </p>
+            <h2 className="mt-2 text-xl font-bold text-slate-900">
+              {data.courseTitle}
+            </h2>
 
-      <p className="text-slate-500">
-        {data.lessonTitle}
-      </p>
+            <p className="mt-1 text-slate-500">
+              Davom etiladigan dars:{" "}
+              <span className="font-medium text-slate-700">
+                {data.lessonTitle}
+              </span>
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="shrink-0 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+          >
+            Davom ettirish
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
