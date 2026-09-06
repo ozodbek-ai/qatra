@@ -1,5 +1,10 @@
 import { prisma } from "../lib/prisma.js";
 
+import {
+  createNotification,
+} from "./notification.service.js";
+
+
 async function getCourseProgressPercentage(
   userId: string,
   courseId: string
@@ -34,6 +39,12 @@ async function getCourseProgressPercentage(
   );
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| Update challenge scores
+|--------------------------------------------------------------------------
+*/
 
 export async function updateChallengeScores(
   challengeId: string
@@ -127,6 +138,12 @@ export async function updateChallengeScores(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Complete challenge
+|--------------------------------------------------------------------------
+*/
+
 export async function completeChallenge(
   challengeId: string
 ) {
@@ -213,52 +230,123 @@ export async function completeChallenge(
     }
   }
 
-  return prisma.challenge.update({
-    where: {
-      id: challengeId,
-    },
-
-    data: {
-      status: "COMPLETED",
-
-      winnerId,
-    },
-
-    include: {
-      challenger: {
-        select: {
-          id: true,
-          fullName: true,
-          avatarUrl: true,
-        },
+  const completedChallenge =
+    await prisma.challenge.update({
+      where: {
+        id: challengeId,
       },
 
-      opponent: {
-        select: {
-          id: true,
-          fullName: true,
-          avatarUrl: true,
-        },
+      data: {
+        status: "COMPLETED",
+
+        winnerId,
       },
 
-      winner: {
-        select: {
-          id: true,
-          fullName: true,
-          avatarUrl: true,
+      include: {
+        challenger: {
+          select: {
+            id: true,
+            fullName: true,
+            avatarUrl: true,
+          },
         },
-      },
 
-      course: {
-        select: {
-          id: true,
-          title: true,
-          imageUrl: true,
+        opponent: {
+          select: {
+            id: true,
+            fullName: true,
+            avatarUrl: true,
+          },
+        },
+
+        winner: {
+          select: {
+            id: true,
+            fullName: true,
+            avatarUrl: true,
+          },
+        },
+
+        course: {
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+          },
         },
       },
-    },
-  });
+    });
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Challenge completed notifications
+  |--------------------------------------------------------------------------
+  */
+
+  const participants = [
+    completedChallenge.challenger,
+    completedChallenge.opponent,
+  ];
+
+  for (const participant of participants) {
+    const isWinner =
+      completedChallenge.winnerId ===
+      participant.id;
+
+    const isDraw =
+      completedChallenge.winnerId === null;
+
+    let message: string;
+
+    if (isDraw) {
+      message =
+        `"${completedChallenge.course.title}" ` +
+        `kursidagi challenge durang bilan yakunlandi.`;
+    } else if (isWinner) {
+      message =
+        `"${completedChallenge.course.title}" ` +
+        `kursidagi challengeda g'alaba qozondingiz!`;
+    } else {
+      message =
+        `"${completedChallenge.course.title}" ` +
+        `kursidagi challenge yakunlandi.`;
+    }
+
+    await createNotification({
+      userId: participant.id,
+
+      type: "CHALLENGE_COMPLETED",
+
+      title: "Challenge yakunlandi",
+
+      message,
+
+      link:
+        `/challenges/${completedChallenge.id}`,
+
+      metadata: {
+        challengeId:
+          completedChallenge.id,
+
+        courseId:
+          completedChallenge.course.id,
+
+        winnerId:
+          completedChallenge.winnerId,
+      },
+    });
+  }
+
+  return completedChallenge;
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| Update user's active course challenges
+|--------------------------------------------------------------------------
+*/
 
 export async function updateUserCourseChallenges(
   userId: string,
@@ -268,12 +356,14 @@ export async function updateUserCourseChallenges(
     await prisma.challenge.findMany({
       where: {
         courseId,
+
         status: "ACCEPTED",
 
         OR: [
           {
             challengerId: userId,
           },
+
           {
             opponentId: userId,
           },

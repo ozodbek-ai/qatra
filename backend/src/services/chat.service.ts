@@ -2,6 +2,12 @@ import * as chatRepository from "../repositories/chat.repository.js";
 
 import { AppError } from "../utils/AppError.js";
 
+import { io } from "../socket/socket.js";
+
+import {
+  createNotification,
+} from "./notification.service.js";
+
 /*
 |--------------------------------------------------------------------------
 | Users
@@ -167,15 +173,65 @@ export const sendMessage = async (
     );
   }
 
-  return chatRepository.createMessage({
-    conversationId,
+  const message =
+    await chatRepository.createMessage({
+      conversationId,
 
-    senderId: userId,
+      senderId: userId,
 
-    text: data.text?.trim(),
+      text: data.text?.trim(),
 
-    reelId: data.reelId,
+      reelId: data.reelId,
+    });
+
+const members =
+  await chatRepository.getConversationMembers(
+    conversationId
+  );
+
+for (const member of members) {
+  /*
+   * Chat message real-time yuboriladi.
+   */
+  io.to(
+    `user:${member.userId}`
+  ).emit(
+    "message:new",
+    message
+  );
+
+  /*
+   * Xabar yuboruvchining o'ziga
+   * notification yaratmaymiz.
+   */
+  if (member.userId === userId) {
+    continue;
+  }
+
+  /*
+   * Xabar qabul qiluvchiga
+   * notification yaratamiz.
+   */
+  await createNotification({
+    userId: member.userId,
+
+    type: "CHAT_MESSAGE",
+
+    title: "Yangi xabar",
+
+    message: `${message.sender.fullName} sizga yangi xabar yubordi.`,
+
+    link: `/chat/${conversationId}`,
+
+    metadata: {
+      conversationId,
+      messageId: message.id,
+      senderId: userId,
+    },
   });
+}
+
+return message;
 };
 
 /*

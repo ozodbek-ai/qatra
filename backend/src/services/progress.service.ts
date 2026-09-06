@@ -106,49 +106,6 @@ const lesson =
 );
 
 
-  /*
-   * =========================================
-   * CHALLENGE PROGRESS UPDATE
-   * =========================================
-   *
-   * User ushbu kurs bo'yicha faol challenge
-   * ichida qatnashayotgan bo'lsa, score yangilanadi.
-   */
-
-  const activeChallenges =
-    await prisma.challenge.findMany({
-      where: {
-        courseId: lesson.courseId,
-
-        status: "ACCEPTED",
-
-        OR: [
-          {
-            challengerId: userId,
-          },
-          {
-            opponentId: userId,
-          },
-        ],
-      },
-
-      select: {
-        id: true,
-      },
-    });
-
-
-  await Promise.all(
-    activeChallenges.map(
-      async (challenge) => {
-        await challengeService.completeChallenge(
-          challenge.id
-        );
-      }
-    )
-  );
-
-
   return result;
 };
 

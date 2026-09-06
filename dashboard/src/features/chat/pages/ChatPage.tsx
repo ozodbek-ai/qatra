@@ -45,11 +45,17 @@ import type {
   ChatUser,
 } from "../types/chat";
 
+import {
+  useChatSocket,
+} from "../hooks/useChatSocket";
+
 
 export default function ChatPage() {
   const currentUser = useAuthStore(
     (state) => state.user
   );
+
+  useChatSocket();
 
   /*
    * =====================
@@ -146,25 +152,13 @@ export default function ChatPage() {
    */
 
   const selectedUser =
-    useMemo(() => {
-      if (
-        !selectedConversation ||
-        !currentUser
-      ) {
-        return null;
-      }
+  useMemo(() => {
+    if (!selectedConversation) {
+      return null;
+    }
 
-      return (
-        selectedConversation.members.find(
-          (member) =>
-            member.userId !==
-            currentUser.id
-        )?.user ?? null
-      );
-    }, [
-      selectedConversation,
-      currentUser,
-    ]);
+    return selectedConversation.otherUser;
+  }, [selectedConversation]);
 
   /*
    * =====================

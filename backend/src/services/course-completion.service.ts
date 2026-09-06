@@ -1,6 +1,11 @@
 import { prisma } from "../lib/prisma.js";
 
 import * as completionRepository from "../repositories/course-completion.repository.js";
+import * as notificationService from
+  "./notification.service.js";
+  import {
+  createNotification,
+} from "./notification.service.js";
 
 export const checkCourseCompletion = async (
   userId: string,
@@ -216,15 +221,42 @@ const course =
     "Creating course completion..."
   );
 
-  const completion =
-    await completionRepository.createCompletion(
-      userId,
-      courseId
-    );
-
-  console.log(
-    "✅ Course completion created"
+const completion =
+  await completionRepository.createCompletion(
+    userId,
+    courseId
   );
+
+/*
+|--------------------------------------------------------------------------
+| Course completed notification
+|--------------------------------------------------------------------------
+*/
+
+await createNotification({
+  userId,
+
+  type: "COURSE_COMPLETED",
+
+  title: "Kurs yakunlandi",
+
+  message:
+    `"${course.title}" kursini muvaffaqiyatli yakunladingiz!`,
+
+  link:
+    `/courses/${courseId}`,
+
+  metadata: {
+    courseId,
+
+    completionId:
+      completion.id,
+  },
+});
+
+console.log(
+  "✅ Course completion created"
+);
 
   console.log(
     "Completion ID:",

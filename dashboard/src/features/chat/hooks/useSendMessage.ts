@@ -18,6 +18,13 @@ export function useSendMessage() {
   return useMutation({
     mutationFn: sendMessage,
 
+    /*
+     * Hozircha REST API xabarni yaratadi.
+     *
+     * Keyingi bosqichda Socket.IO
+     * boshqa foydalanuvchilarga
+     * real-time event yuboradi.
+     */
     onSuccess: (
       message: ChatMessage
     ) => {
@@ -28,9 +35,15 @@ export function useSendMessage() {
         ],
       });
 
+      /*
+       * Muhim:
+       *
+       * useConversations hook'ida
+       * aynan shu queryKey ishlatilgan.
+       */
       queryClient.invalidateQueries({
         queryKey: [
-          "conversations",
+          "chat-conversations",
         ],
       });
     },

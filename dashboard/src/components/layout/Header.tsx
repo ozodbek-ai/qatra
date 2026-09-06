@@ -10,8 +10,71 @@ import { toast } from "sonner";
 
 import { useAuthStore } from "@/features/auth/store/auth.store";
 
+import {
+  useUnreadNotificationCount,
+} from "@/features/notifications/hooks/useUnreadNotificationCount";
+
+import {
+  useNotificationSocket,
+} from "@/features/notifications/hooks/useNotificationSocket";
+
+import {
+  NotificationDropdown,
+} from "@/features/notifications/components/NotificationDropdown";
+
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+
+
 export default function Header() {
   const navigate = useNavigate();
+
+  const [
+  isNotificationOpen,
+  setIsNotificationOpen,
+] = useState(false);
+
+const notificationRef =
+  useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+  const handleClickOutside = (
+    event: MouseEvent
+  ) => {
+    if (
+      notificationRef.current &&
+      !notificationRef.current.contains(
+        event.target as Node
+      )
+    ) {
+      setIsNotificationOpen(false);
+    }
+  };
+
+  document.addEventListener(
+    "mousedown",
+    handleClickOutside
+  );
+
+  return () => {
+    document.removeEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+  };
+}, []);
+
+  const unreadNotifications =
+  useUnreadNotificationCount();
+
+useNotificationSocket();
+
+const unreadCount =
+  unreadNotifications.data ?? 0;
 
   const {
     user,
@@ -65,15 +128,40 @@ export default function Header() {
           <Search size={20} />
         </button>
 
-        <button
-          type="button"
-          className="relative rounded-xl p-2.5 transition hover:bg-slate-800"
-          aria-label="Bildirishnomalar"
-        >
-          <Bell size={20} />
+       <div
+  ref={notificationRef}
+  className="relative"
+>
+  <button
+    type="button"
+    onClick={() =>
+      setIsNotificationOpen(
+        (previous) => !previous
+      )
+    }
+    className="relative rounded-xl p-2.5 transition hover:bg-slate-800"
+    aria-label="Bildirishnomalar"
+    aria-expanded={isNotificationOpen}
+  >
+    <Bell size={20} />
 
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-500" />
-        </button>
+    {unreadCount > 0 && (
+      <span className="absolute right-1.5 top-1.5 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1 text-[10px] font-bold text-white">
+        {unreadCount > 99
+          ? "99+"
+          : unreadCount}
+      </span>
+    )}
+  </button>
+
+{isNotificationOpen && (
+  <NotificationDropdown
+    onClose={() =>
+      setIsNotificationOpen(false)
+    }
+  />
+)}
+</div>
 
         {/* User */}
 

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+
 import { getMessages } from "../api/getMessages";
 
 export function useMessages(
@@ -17,6 +18,12 @@ export function useMessages(
 
     enabled: Boolean(conversationId),
 
-    refetchInterval: 5000,
+    /*
+     * Real-time Socket.IO ishlatamiz.
+     *
+     * Shuning uchun 5 sekundlik polling
+     * kerak emas.
+     */
+    refetchOnWindowFocus: false,
   });
 }

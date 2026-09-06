@@ -13,7 +13,7 @@ export const authMiddleware = (
   
 
   const authHeader = req.headers.authorization;
-
+ 
   logger.debug({
     authorization: authHeader,
   });

@@ -65,6 +65,7 @@ model User {
 
   conversations ConversationMember[]
   sentMessages  Message[]            @relation("MessageSender")
+  notifications Notification[]
 
   challengesCreated  Challenge[] @relation("ChallengesCreated")
   challengesReceived Challenge[] @relation("ChallengesReceived")
@@ -510,4 +511,63 @@ model Challenge {
   @@index([opponentId])
   @@index([courseId])
   @@index([status])
+}
+
+enum NotificationType {
+  CHAT_MESSAGE
+  CHALLENGE_RECEIVED
+  CHALLENGE_ACCEPTED
+  CHALLENGE_DECLINED
+  CHALLENGE_COMPLETED
+  COURSE_ENROLLED
+  COURSE_COMPLETED
+  CERTIFICATE_ISSUED
+  SYSTEM
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  userId String
+
+  type NotificationType
+
+  title String
+
+  message String
+
+  isRead Boolean @default(false)
+
+  readAt DateTime?
+
+  /*
+   * Frontend qayerga o'tishini
+   * saqlash uchun.
+   *
+   * Masalan:
+   * /chat/conversations/123
+   * /challenges/456
+   * /courses/789
+   */
+  link String?
+
+  /*
+   * Qo'shimcha ma'lumotlar uchun.
+   *
+   * Masalan:
+   * conversationId
+   * challengeId
+   * courseId
+   * senderId
+   */
+  metadata Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
 }

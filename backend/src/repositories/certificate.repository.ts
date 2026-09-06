@@ -23,6 +23,15 @@ export const createCertificate = (
       completionId,
       certificateNo,
     },
+
+    include: {
+      course: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
   });
 };
 

@@ -3,6 +3,11 @@ import * as completionRepository from "../repositories/course-completion.reposit
 import { generateCertificateNo } from "../utils/generateCertificateNo.js";
 import { AppError } from "../utils/AppError.js";
 import PDFDocument from "pdfkit";
+import * as notificationService from
+  "./notification.service.js";
+import {
+  createNotification,
+} from "./notification.service.js";
 
 export const generateCertificate = async (
   userId: string,
@@ -31,12 +36,47 @@ export const generateCertificate = async (
     return existing;
   }
 
-  return certificateRepository.createCertificate(
+  const certificate =
+  await certificateRepository.createCertificate(
     userId,
     courseId,
     completion.id,
     generateCertificateNo()
   );
+
+/*
+|--------------------------------------------------------------------------
+| Notification
+|--------------------------------------------------------------------------
+*/
+
+await createNotification({
+  userId,
+
+  type: "CERTIFICATE_ISSUED",
+
+  title: "Sertifikat tayyor",
+
+  message:
+    `"${certificate.course.title}" kursi uchun sertifikatingiz yaratildi.`,
+
+  link:
+    `/certificates/${certificate.id}`,
+
+  metadata: {
+    certificateId:
+      certificate.id,
+
+    certificateNo:
+      certificate.certificateNo,
+
+    courseId:
+      certificate.course.id,
+  },
+});
+
+
+return certificate;
 
 };
 

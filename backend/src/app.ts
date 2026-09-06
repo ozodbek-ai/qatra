@@ -38,6 +38,8 @@ import reelCategoryRoutes from "./routes/reel-category.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import challengeRoutes
   from "./routes/challenge.routes.js";
+import notificationRoutes from
+  "./routes/notification.routes.js";
 
 
 
@@ -175,6 +177,11 @@ app.use(
 app.use(
   "/api/v1/challenges",
   challengeRoutes
+);
+
+app.use(
+  "/api/v1/notifications",
+  notificationRoutes
 );
 
 // ❗ Error middleware eng oxirida bo'lishi kerak

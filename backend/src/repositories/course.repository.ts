@@ -29,6 +29,21 @@ export const findCourseBySlug = (
     },
 
     include: {
+      lessons: {
+        orderBy: {
+          order: "asc",
+        },
+
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          videoUrl: true,
+          order: true,
+          duration: true,
+        },
+      },
+
       reviews: {
         include: {
           user: {

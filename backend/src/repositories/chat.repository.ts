@@ -382,3 +382,42 @@ export const getUnreadMessageCount = async (
     },
   });
 };
+
+/*
+|--------------------------------------------------------------------------
+| Socket helpers
+|--------------------------------------------------------------------------
+*/
+
+export const getConversationMemberIds = async (
+  conversationId: string
+) => {
+  const members =
+    await prisma.conversationMember.findMany({
+      where: {
+        conversationId,
+      },
+
+      select: {
+        userId: true,
+      },
+    });
+
+  return members.map(
+    (member) => member.userId
+  );
+};
+
+export const getConversationMembers = async (
+  conversationId: string
+) => {
+  return prisma.conversationMember.findMany({
+    where: {
+      conversationId,
+    },
+
+    select: {
+      userId: true,
+    },
+  });
+};

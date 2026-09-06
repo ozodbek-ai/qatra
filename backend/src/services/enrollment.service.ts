@@ -7,6 +7,11 @@ import {
 
 import * as enrollmentRepository from "../repositories/enrollment.repository.js";
 import * as courseRepository from "../repositories/course.repository.js";
+import * as notificationService from
+  "./notification.service.js";
+  import {
+  createNotification,
+} from "./notification.service.js";
 
 export const enroll = async (
   userId: string,
@@ -37,20 +42,52 @@ export const enroll = async (
     );
   }
 
-  const createdEnrollment =
-    await enrollmentRepository.createEnrollment(
-      userId,
-      courseId
-    );
-
-  logger.info({
-    message: "Student enrolled",
+const createdEnrollment =
+  await enrollmentRepository.createEnrollment(
     userId,
-    courseId,
-    enrollmentId: createdEnrollment.id,
-  });
+    courseId
+  );
 
-  return createdEnrollment;
+/*
+|--------------------------------------------------------------------------
+| Notification
+|--------------------------------------------------------------------------
+*/
+
+/*
+|--------------------------------------------------------------------------
+| Course enrollment notification
+|--------------------------------------------------------------------------
+*/
+
+await createNotification({
+  userId,
+
+  type: "COURSE_ENROLLED",
+
+  title: "Kursga yozildingiz",
+
+  message:
+    `"${course.title}" kursiga muvaffaqiyatli yozildingiz.`,
+
+  link:
+    `/courses/${courseId}`,
+
+  metadata: {
+    courseId,
+    enrollmentId:
+      createdEnrollment.id,
+  },
+});
+
+logger.info({
+  message: "Student enrolled",
+  userId,
+  courseId,
+  enrollmentId: createdEnrollment.id,
+});
+
+return createdEnrollment;
 };
 
 export const getMyCourses = async (

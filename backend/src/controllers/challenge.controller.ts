@@ -11,6 +11,10 @@ import {
 
 import { AppError } from "../utils/AppError.js";
 
+import {
+  createNotification,
+} from "../services/notification.service.js";
+
 
 /* =========================================
    HELPERS
@@ -277,6 +281,26 @@ export async function createChallenge(
         },
       });
 
+      await createNotification({
+  userId: opponentId,
+
+  type: "CHALLENGE_RECEIVED",
+
+  title: "Yangi challenge",
+
+  message:
+    `${challenge.challenger.fullName} sizni ` +
+    `"${challenge.course.title}" kursida challenge qilishga taklif qildi.`,
+
+  link: `/challenges/${challenge.id}`,
+
+  metadata: {
+    challengeId: challenge.id,
+    courseId: challenge.course.id,
+    challengerId,
+  },
+});
+
     return res.status(201).json({
       success: true,
       data: challenge,
@@ -510,6 +534,27 @@ export async function acceptChallenge(
         },
       });
 
+      await createNotification({
+  userId: updatedChallenge.challenger.id,
+
+  type: "CHALLENGE_ACCEPTED",
+
+  title: "Challenge qabul qilindi",
+
+  message:
+    `${updatedChallenge.opponent.fullName} sizning ` +
+    `"${updatedChallenge.course.title}" kursidagi ` +
+    `challenge taklifingizni qabul qildi.`,
+
+  link: `/challenges/${updatedChallenge.id}`,
+
+  metadata: {
+    challengeId: updatedChallenge.id,
+    courseId: updatedChallenge.course.id,
+    opponentId: updatedChallenge.opponent.id,
+  },
+});
+
     return res.json({
       success: true,
       data: updatedChallenge,
@@ -575,16 +620,63 @@ export async function declineChallenge(
       });
     }
 
-    const updatedChallenge =
-      await prisma.challenge.update({
-        where: {
-          id: challengeId,
-        },
+const updatedChallenge =
+  await prisma.challenge.update({
+    where: {
+      id: challengeId,
+    },
 
-        data: {
-          status: "DECLINED",
+    data: {
+      status: "DECLINED",
+    },
+
+    include: {
+      challenger: {
+        select: {
+          id: true,
+          fullName: true,
+          avatarUrl: true,
         },
-      });
+      },
+
+      opponent: {
+        select: {
+          id: true,
+          fullName: true,
+          avatarUrl: true,
+        },
+      },
+
+      course: {
+        select: {
+          id: true,
+          title: true,
+          imageUrl: true,
+        },
+      },
+    },
+  });
+
+  await createNotification({
+  userId: updatedChallenge.challenger.id,
+
+  type: "CHALLENGE_DECLINED",
+
+  title: "Challenge rad etildi",
+
+  message:
+    `${updatedChallenge.opponent.fullName} sizning ` +
+    `"${updatedChallenge.course.title}" kursidagi ` +
+    `challenge taklifingizni rad etdi.`,
+
+  link: `/challenges/${updatedChallenge.id}`,
+
+  metadata: {
+    challengeId: updatedChallenge.id,
+    courseId: updatedChallenge.course.id,
+    opponentId: updatedChallenge.opponent.id,
+  },
+});
 
     return res.json({
       success: true,
