@@ -11,6 +11,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { api } from "@/lib/axios";
+import { isAxiosError } from "axios";
 
 import type { CourseFormData } from "../types/course-form";
 import { useCreateCourse } from "../hooks/useCreateCourse";
@@ -196,16 +197,16 @@ export default function CourseForm({
           },
         }
       );
-    } catch (error: any) {
-      setIsUploadingImage(false);
+    } catch (error: unknown) {
+  setIsUploadingImage(false);
 
-      const message =
-        error?.response?.data
-          ?.message ??
-        "Rasmni yuklashda xatolik yuz berdi.";
+  const message = isAxiosError<{ message?: string }>(error)
+    ? error.response?.data?.message ??
+      "Rasmni yuklashda xatolik yuz berdi."
+    : "Rasmni yuklashda xatolik yuz berdi.";
 
-      toast.error(message);
-    }
+  toast.error(message);
+}
   };
 
   const isSaving =

@@ -61,6 +61,8 @@ model User {
 
   emailVerified Boolean @default(false)
 
+  chatConversations ChatConversation[]
+
   passwordResetTokens PasswordResetToken[]
 
   conversations ConversationMember[]
@@ -540,10 +542,9 @@ model Notification {
 
   readAt DateTime?
 
-  /*
+  /**
    * Frontend qayerga o'tishini
    * saqlash uchun.
-   *
    * Masalan:
    * /chat/conversations/123
    * /challenges/456
@@ -551,9 +552,8 @@ model Notification {
    */
   link String?
 
-  /*
+  /**
    * Qo'shimcha ma'lumotlar uchun.
-   *
    * Masalan:
    * conversationId
    * challengeId
@@ -570,4 +570,38 @@ model Notification {
   @@index([userId])
   @@index([userId, isRead])
   @@index([userId, createdAt])
+}
+
+model ChatConversation {
+  id     String  @id @default(cuid())
+  title  String?
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messages ChatMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id             String @id @default(cuid())
+  conversationId String
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role    ChatRole
+  content String   @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
 }

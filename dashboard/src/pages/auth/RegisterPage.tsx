@@ -1,4 +1,7 @@
-import { useForm } from "react-hook-form";
+import {
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { Link } from "react-router-dom";
 
 import {
@@ -20,13 +23,16 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<RegisterRequest & { confirmPassword: string }>({
     mode: "onSubmit",
   });
 
-  const password = watch("password");
+  const password = useWatch({
+  control,
+  name: "password",
+});
 
   const onSubmit = (
     data: RegisterRequest & { confirmPassword: string }

@@ -6,6 +6,16 @@ import {
   resetPassword,
 } from "../api/resetPassword";
 
+type ApiErrorResponse = {
+  message?: string;
+};
+
+type ApiError = {
+  response?: {
+    data?: ApiErrorResponse;
+  };
+};
+
 export function useResetPassword() {
   const navigate = useNavigate();
 
@@ -22,9 +32,12 @@ export function useResetPassword() {
       });
     },
 
-    onError(error: any) {
+    onError(error) {
+      const apiError =
+        error as ApiError;
+
       toast.error(
-        error?.response?.data?.message ??
+        apiError.response?.data?.message ??
           "Parolni o'zgartirishda xatolik yuz berdi.",
       );
     },

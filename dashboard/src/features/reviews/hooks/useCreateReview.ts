@@ -5,6 +5,8 @@ import {
 
 import { toast } from "sonner";
 
+import { isAxiosError } from "axios";
+
 import {
   createReview,
   type CreateReviewData,
@@ -37,12 +39,13 @@ export const useCreateReview = () => {
       });
     },
 
-    onError: (error: any) => {
-      const message =
-        error?.response?.data?.message ??
-        "Review yuborishda xatolik yuz berdi.";
+    onError: (error: unknown) => {
+  const message = isAxiosError<{ message?: string }>(error)
+    ? error.response?.data?.message ??
+      "Review yuborishda xatolik yuz berdi."
+    : "Review yuborishda xatolik yuz berdi.";
 
-      toast.error(message);
-    },
+  toast.error(message);
+},
   });
 };

@@ -1,5 +1,8 @@
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import {
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import {
   Camera,
   Lock,
@@ -30,21 +33,16 @@ type PasswordFormData = {
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+
   const {
     data: profile,
     isLoading,
     isError,
   } = useProfile();
 
-
-  const updateProfile =
-    useUpdateProfile();
-
-  const changePassword =
-    useChangePassword();
-
-  const uploadAvatar =
-    useUploadAvatar();
+  const updateProfile = useUpdateProfile();
+  const changePassword = useChangePassword();
+  const uploadAvatar = useUploadAvatar();
 
   const fileInputRef =
     useRef<HTMLInputElement>(null);
@@ -61,16 +59,21 @@ export default function SettingsPage() {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
     reset: resetPassword,
-    watch,
+    control: passwordControl,
     formState: {
       errors: passwordErrors,
     },
-  } = useForm<PasswordFormData>({
-    mode: "onSubmit",
+  } = useForm<PasswordFormData>();
+
+  const currentPassword = useWatch({
+    control: passwordControl,
+    name: "currentPassword",
   });
 
-  const newPassword =
-    watch("newPassword");
+  const newPassword = useWatch({
+    control: passwordControl,
+    name: "newPassword",
+  });
 
   if (isLoading) {
     return (
@@ -91,22 +94,17 @@ export default function SettingsPage() {
   const onProfileSubmit = (
     data: ProfileFormData
   ) => {
-    updateProfile.mutate(
-      data.fullName
-    );
+    updateProfile.mutate(data.fullName);
   };
 
   const onPasswordSubmit = (
     data: PasswordFormData
   ) => {
-    changePassword.mutate(
-      data,
-      {
-        onSuccess: () => {
-          resetPassword();
-        },
-      }
-    );
+    changePassword.mutate(data, {
+      onSuccess: () => {
+        resetPassword();
+      },
+    });
   };
 
   const handleAvatarChange = (
@@ -134,8 +132,7 @@ export default function SettingsPage() {
   };
 
   const avatar =
-    avatarPreview ??
-    profile.avatarUrl;
+    avatarPreview ?? profile.avatarUrl;
 
   return (
     <main className="min-h-screen bg-slate-100 p-8">
@@ -273,40 +270,40 @@ export default function SettingsPage() {
         </section>
 
         {/* Admin management */}
-  {user?.role === "SUPER_ADMIN" && (
-  <section className="rounded-2xl bg-white p-6 shadow-sm">
-    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-purple-100 p-3 text-purple-600">
-          <User size={22} />
-        </div>
+        {user?.role === "SUPER_ADMIN" && (
+          <section className="rounded-2xl bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-purple-100 p-3 text-purple-600">
+                  <User size={22} />
+                </div>
 
-        <div>
-          <h2 className="text-xl font-semibold">
-            Adminlarni boshqarish
-          </h2>
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    Adminlarni boshqarish
+                  </h2>
 
-          <p className="text-sm text-slate-500">
-            Foydalanuvchilarni admin qilish
-            yoki adminlikdan chiqarish.
-          </p>
-        </div>
-      </div>
+                  <p className="text-sm text-slate-500">
+                    Foydalanuvchilarni admin qilish
+                    yoki adminlikdan chiqarish.
+                  </p>
+                </div>
+              </div>
 
-      <button
-        type="button"
-        onClick={() =>
-          navigate(
-            "/admin/settings/admins"
-          )
-        }
-        className="inline-flex min-h-12 items-center justify-center rounded-[14px] bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-700"
-      >
-        Adminlarni boshqarish
-      </button>
-    </div>
-  </section>
-)}
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    "/admin/settings/admins"
+                  )
+                }
+                className="inline-flex min-h-12 items-center justify-center rounded-[14px] bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-700"
+              >
+                Adminlarni boshqarish
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Password */}
         <section className="rounded-2xl bg-white p-6 shadow-sm">
@@ -370,8 +367,7 @@ export default function SettingsPage() {
                   role="alert"
                 >
                   {
-                    passwordErrors
-                      .currentPassword
+                    passwordErrors.currentPassword
                       .message
                   }
                 </p>
@@ -413,10 +409,7 @@ export default function SettingsPage() {
                     },
 
                     validate: (value) =>
-                      value !==
-                        watch(
-                          "currentPassword"
-                        ) ||
+                      value !== currentPassword ||
                       "Yangi parol joriy paroldan farq qilishi kerak",
                   }
                 )}
@@ -428,8 +421,7 @@ export default function SettingsPage() {
                   role="alert"
                 >
                   {
-                    passwordErrors
-                      .newPassword
+                    passwordErrors.newPassword
                       .message
                   }
                 </p>
@@ -465,8 +457,7 @@ export default function SettingsPage() {
                       "Iltimos, yangi parolni tasdiqlang",
 
                     validate: (value) =>
-                      value ===
-                        newPassword ||
+                      value === newPassword ||
                       "Parollar bir xil emas",
                   }
                 )}
@@ -478,39 +469,44 @@ export default function SettingsPage() {
                   role="alert"
                 >
                   {
-                    passwordErrors
-                      .confirmPassword
+                    passwordErrors.confirmPassword
                       .message
                   }
                 </p>
               )}
             </div>
 
-           <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
-  <button
-    type="submit"
-    disabled={changePassword.isPending}
-    className="inline-flex min-h-12 min-w-[220px] items-center justify-center rounded-[14px] bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-  >
-    {changePassword.isPending ? (
-      <>
-        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-        Saqlanmoqda...
-      </>
-    ) : (
-      "Parolni o'zgartirish"
-    )}
-  </button>
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
+              <button
+                type="submit"
+                disabled={
+                  changePassword.isPending
+                }
+                className="inline-flex min-h-12 min-w-[220px] items-center justify-center rounded-[14px] bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {changePassword.isPending ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Saqlanmoqda...
+                  </>
+                ) : (
+                  "Parolni o'zgartirish"
+                )}
+              </button>
 
-  <button
-    type="button"
-    onClick={() => resetPassword()}
-    disabled={changePassword.isPending}
-    className="inline-flex min-h-12 items-center justify-center rounded-[14px] border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-  >
-    Bekor qilish
-  </button>
-</div>
+              <button
+                type="button"
+                onClick={() =>
+                  resetPassword()
+                }
+                disabled={
+                  changePassword.isPending
+                }
+                className="inline-flex min-h-12 items-center justify-center rounded-[14px] border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Bekor qilish
+              </button>
+            </div>
           </form>
         </section>
 

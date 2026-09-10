@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+import { isAxiosError } from "axios";
 
-import { Button, Input, Badge } from "@/components/ui";
+import { Badge, Button, Input } from "@/components/ui";
 import { api } from "@/lib/axios";
 
 interface ProgressItem {
   id: string;
-
   completed: boolean;
   completedAt: string | null;
   lastViewedAt: string;
@@ -29,10 +33,8 @@ interface ProgressItem {
 
 interface ProgressResponse {
   success: boolean;
-
   data: {
     items: ProgressItem[];
-
     pagination: {
       page: number;
       limit: number;
@@ -43,91 +45,75 @@ interface ProgressResponse {
 }
 
 export default function ProgressPage() {
-  const [items, setItems] =
-    useState<ProgressItem[]>([]);
+  const [items, setItems] = useState<ProgressItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [search, setSearch] =
-    useState("");
+  const loadProgress = useCallback(
+    async (
+      currentPage: number,
+      currentSearch: string,
+    ) => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const [page, setPage] =
-    useState(1);
-
-  const [total, setTotal] =
-    useState(0);
-
-  const [totalPages, setTotalPages] =
-    useState(1);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const loadProgress = async (
-    currentPage = page,
-    currentSearch = search
-  ) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response =
-        await api.get<ProgressResponse>(
-          "/progress/admin",
-          {
-            params: {
-              page: currentPage,
-              limit: 10,
-
-              ...(currentSearch.trim()
-                ? {
-                    search:
-                      currentSearch.trim(),
-                  }
-                : {}),
+        const response =
+          await api.get<ProgressResponse>(
+            "/progress/admin",
+            {
+              params: {
+                page: currentPage,
+                limit: 10,
+                ...(currentSearch.trim()
+                  ? {
+                      search:
+                        currentSearch.trim(),
+                    }
+                  : {}),
+              },
             },
-          }
+          );
+
+        const data = response.data.data;
+
+        setItems(data.items);
+        setTotal(data.pagination.total);
+        setTotalPages(
+          data.pagination.totalPages,
         );
+      } catch (err: unknown) {
+        const message = isAxiosError<{
+          message?: string;
+        }>(err)
+          ? err.response?.data?.message ??
+            "Progress ma'lumotlarini yuklab bo'lmadi."
+          : "Progress ma'lumotlarini yuklab bo'lmadi.";
 
-      const data =
-        response.data.data;
-
-      setItems(data.items);
-
-      setTotal(
-        data.pagination.total
-      );
-
-      setTotalPages(
-        data.pagination.totalPages
-      );
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message ||
-          "Progress ma'lumotlarini yuklab bo'lmadi."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    loadProgress(1, "");
-  }, []);
+    queueMicrotask(() => {
+      void loadProgress(1, "");
+    });
+  }, [loadProgress]);
 
   const handleSearch = () => {
     setPage(1);
-
-    loadProgress(
-      1,
-      search
-    );
+    void loadProgress(1, search);
   };
 
-  const handlePageChange = (
-    nextPage: number
-  ) => {
+  const handlePageChange = (nextPage: number) => {
     if (
       nextPage < 1 ||
       nextPage > totalPages
@@ -136,11 +122,7 @@ export default function ProgressPage() {
     }
 
     setPage(nextPage);
-
-    loadProgress(
-      nextPage,
-      search
-    );
+    void loadProgress(nextPage, search);
   };
 
   return (
@@ -151,7 +133,7 @@ export default function ProgressPage() {
         </h1>
 
         <p className="mt-2 text-[var(--color-muted)]">
-          Studentlarning darslar bo'yicha
+          Studentlarning darslar bo&apos;yicha
           progressini kuzatish.
         </p>
       </div>
@@ -171,9 +153,7 @@ export default function ProgressPage() {
           className="max-w-md"
         />
 
-        <Button
-          onClick={handleSearch}
-        >
+        <Button onClick={handleSearch}>
           Qidirish
         </Button>
       </div>
@@ -237,7 +217,7 @@ export default function ProgressPage() {
                   colSpan={6}
                   className="p-10 text-center text-[var(--color-muted)]"
                 >
-                  Progress ma'lumotlari
+                  Progress ma&apos;lumotlari
                   topilmadi.
                 </td>
               </tr>
@@ -249,17 +229,11 @@ export default function ProgressPage() {
                 >
                   <td className="p-4">
                     <p className="font-medium">
-                      {
-                        item.student
-                          .fullName
-                      }
+                      {item.student.fullName}
                     </p>
 
                     <p className="text-sm text-[var(--color-muted)]">
-                      {
-                        item.student
-                          .email
-                      }
+                      {item.student.email}
                     </p>
                   </td>
 
@@ -288,19 +262,17 @@ export default function ProgressPage() {
                   <td className="p-4">
                     {item.completedAt
                       ? new Date(
-                          item.completedAt
+                          item.completedAt,
                         ).toLocaleDateString(
-                          "uz-UZ"
+                          "uz-UZ",
                         )
                       : "-"}
                   </td>
 
                   <td className="p-4">
                     {new Date(
-                      item.lastViewedAt
-                    ).toLocaleString(
-                      "uz-UZ"
-                    )}
+                      item.lastViewedAt,
+                    ).toLocaleString("uz-UZ")}
                   </td>
                 </tr>
               ))
@@ -309,43 +281,35 @@ export default function ProgressPage() {
         </table>
       </div>
 
-      {!loading &&
-        items.length > 0 && (
-          <div className="mt-5 flex items-center justify-between">
-            <p className="text-sm text-[var(--color-muted)]">
-              Sahifa {page} /{" "}
-              {totalPages}
-            </p>
+      {!loading && items.length > 0 && (
+        <div className="mt-5 flex items-center justify-between">
+          <p className="text-sm text-[var(--color-muted)]">
+            Sahifa {page} / {totalPages}
+          </p>
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                disabled={page <= 1}
-                onClick={() =>
-                  handlePageChange(
-                    page - 1
-                  )
-                }
-              >
-                ← Oldingi
-              </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={page <= 1}
+              onClick={() =>
+                handlePageChange(page - 1)
+              }
+            >
+              ← Oldingi
+            </Button>
 
-              <Button
-                variant="outline"
-                disabled={
-                  page >= totalPages
-                }
-                onClick={() =>
-                  handlePageChange(
-                    page + 1
-                  )
-                }
-              >
-                Keyingi →
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              disabled={page >= totalPages}
+              onClick={() =>
+                handlePageChange(page + 1)
+              }
+            >
+              Keyingi →
+            </Button>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }

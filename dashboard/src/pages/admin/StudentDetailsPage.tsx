@@ -11,6 +11,7 @@ import {
 
 import { Button, Badge } from "@/components/ui";
 import { api } from "@/lib/axios";
+import { isAxiosError } from "axios";
 
 interface StudentDetails {
   id: string;
@@ -172,12 +173,14 @@ export default function StudentDetailsPage() {
         setStudent(
           response.data.data
         );
-      } catch (err: any) {
-        setError(
-          err?.response?.data?.message ??
-            "Student ma'lumotlarini yuklab bo'lmadi."
-        );
-      } finally {
+      } catch (err: unknown) {
+  const message = isAxiosError<{ message?: string }>(err)
+    ? err.response?.data?.message ??
+      "Student ma'lumotlarini yuklab bo'lmadi."
+    : "Student ma'lumotlarini yuklab bo'lmadi.";
+
+  setError(message);
+} finally {
         setLoading(false);
       }
     };

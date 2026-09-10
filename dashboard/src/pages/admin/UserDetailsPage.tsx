@@ -1,10 +1,10 @@
+import { isAxiosError } from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { Button, Badge } from "@/components/ui";
-import { api } from "@/lib/axios";
-
+import { Badge, Button } from "@/components/ui";
 import { useUserActivityStats } from "@/features/settings/hooks/useUserActivityStats";
+import { api } from "@/lib/axios";
 
 interface UserDetails {
   id: string;
@@ -80,20 +80,16 @@ interface UserDetails {
   }[];
 }
 
-const formatDuration = (
-  seconds: number
-) => {
+const formatDuration = (seconds: number) => {
   if (!seconds || seconds <= 0) {
     return "0 daqiqa";
   }
 
-  const hours =
-    Math.floor(seconds / 3600);
+  const hours = Math.floor(seconds / 3600);
 
-  const minutes =
-    Math.floor(
-      (seconds % 3600) / 60
-    );
+  const minutes = Math.floor(
+    (seconds % 3600) / 60,
+  );
 
   if (hours > 0) {
     return `${hours} soat ${minutes} daqiqa`;
@@ -102,24 +98,16 @@ const formatDuration = (
   return `${minutes} daqiqa`;
 };
 
-const formatDateTime = (
-  value: string
-) => {
-  return new Date(value).toLocaleString(
-    "uz-UZ"
-  );
+const formatDateTime = (value: string) => {
+  return new Date(value).toLocaleString("uz-UZ");
 };
 
-const formatDate = (
-  value: string
-) => {
-  return new Date(value).toLocaleDateString(
-    "uz-UZ"
-  );
+const formatDate = (value: string) => {
+  return new Date(value).toLocaleDateString("uz-UZ");
 };
 
 const getActivityLabel = (
-  type: UserDetails["activities"][number]["type"]
+  type: UserDetails["activities"][number]["type"],
 ) => {
   switch (type) {
     case "LOGIN":
@@ -150,23 +138,20 @@ export default function UserDetailsPage() {
     useState<UserDetails | null>(null);
 
   const [loading, setLoading] =
-    useState(true);
+    useState(Boolean(id));
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState(
+    id ? "" : "User ID topilmadi.",
+  );
 
   const {
     data: activityStats,
-    isLoading:
-      activityStatsLoading,
-    isError:
-      activityStatsError,
+    isLoading: activityStatsLoading,
+    isError: activityStatsError,
   } = useUserActivityStats(id);
 
   useEffect(() => {
     if (!id) {
-      setError("User ID topilmadi.");
-      setLoading(false);
       return;
     }
 
@@ -175,26 +160,27 @@ export default function UserDetailsPage() {
         setLoading(true);
         setError("");
 
-        const response =
-          await api.get<{
-            success: boolean;
-            data: UserDetails;
-          }>(
-            `/admin/users/${id}`
-          );
+        const response = await api.get<{
+          success: boolean;
+          data: UserDetails;
+        }>(`/admin/users/${id}`);
 
         setUser(response.data.data);
-      } catch (err: any) {
-        setError(
-          err?.response?.data?.message ||
+      } catch (err: unknown) {
+        const message = isAxiosError<{
+          message?: string;
+        }>(err)
+          ? err.response?.data?.message ??
             "Foydalanuvchi ma'lumotlarini yuklab bo‘lmadi."
-        );
+          : "Foydalanuvchi ma'lumotlarini yuklab bo‘lmadi.";
+
+        setError(message);
       } finally {
         setLoading(false);
       }
     };
 
-    loadUser();
+    void loadUser();
   }, [id]);
 
   if (loading) {
@@ -218,8 +204,7 @@ export default function UserDetailsPage() {
         </Button>
 
         <div className="mt-6 rounded-xl border border-red-300 bg-red-50 p-6 text-red-700">
-          {error ||
-            "Foydalanuvchi topilmadi."}
+          {error || "Foydalanuvchi topilmadi."}
         </div>
       </div>
     );
@@ -227,7 +212,7 @@ export default function UserDetailsPage() {
 
   const completedLessons =
     user.lessonProgress.filter(
-      (item) => item.completed
+      (item) => item.completed,
     ).length;
 
   const totalLessonProgress =
@@ -239,7 +224,7 @@ export default function UserDetailsPage() {
       : Math.round(
           (completedLessons /
             totalLessonProgress) *
-            100
+            100,
         );
 
   const averageQuizScore =
@@ -249,16 +234,13 @@ export default function UserDetailsPage() {
           user.quizAttempts.reduce(
             (sum, attempt) =>
               sum + attempt.percentage,
-            0
-          ) /
-            user.quizAttempts.length
+            0,
+          ) / user.quizAttempts.length,
         );
 
   return (
     <div className="p-6 md:p-8">
-
       {/* Header */}
-
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <Button
@@ -297,9 +279,7 @@ export default function UserDetailsPage() {
       </div>
 
       {/* Main Statistics */}
-
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
           <p className="text-sm text-[var(--color-muted)]">
             Kurslar
@@ -344,15 +324,11 @@ export default function UserDetailsPage() {
             {averageQuizScore}%
           </p>
         </div>
-
       </div>
 
       {/* Activity Statistics */}
-
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-
         <div className="border-b border-[var(--color-border)] p-6">
-
           <h2 className="text-lg font-semibold">
             Foydalanuvchi faolligi
           </h2>
@@ -360,7 +336,6 @@ export default function UserDetailsPage() {
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             Tizimga kirish va dars ko‘rish statistikasi.
           </p>
-
         </div>
 
         {activityStatsLoading ? (
@@ -373,13 +348,9 @@ export default function UserDetailsPage() {
           </div>
         ) : (
           <>
-
             {/* Weekly Login Indicator */}
-
             <div className="border-b border-[var(--color-border)] p-6">
-
               <div className="flex items-center justify-between gap-4">
-
                 <div>
                   <h3 className="text-sm font-semibold">
                     Haftalik kirish
@@ -393,18 +364,15 @@ export default function UserDetailsPage() {
                 <span className="text-sm font-medium text-[var(--color-muted)]">
                   {activityStats?.logins.week ?? 0} ta kirish
                 </span>
-
               </div>
 
               <div className="mt-6 grid grid-cols-7 gap-2">
-
                 {activityStats?.loginDays?.map(
                   (day) => (
                     <div
                       key={day.date}
                       className="flex min-w-0 flex-col items-center gap-2"
                     >
-
                       <div
                         className={`h-3.5 w-3.5 rounded-full transition-colors ${
                           day.loggedIn
@@ -421,15 +389,12 @@ export default function UserDetailsPage() {
                       <span className="text-xs text-[var(--color-muted)]">
                         {day.day}
                       </span>
-
                     </div>
-                  )
+                  ),
                 )}
-
               </div>
 
               <div className="mt-4 flex items-center justify-center gap-5 text-xs text-[var(--color-muted)]">
-
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
                   Kirgan
@@ -439,15 +404,11 @@ export default function UserDetailsPage() {
                   <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
                   Kirmagan
                 </div>
-
               </div>
-
             </div>
 
             {/* Activity Cards */}
-
             <div className="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-3">
-
               <div className="rounded-xl bg-[var(--color-background)] p-5">
                 <p className="text-sm text-[var(--color-muted)]">
                   Bugungi kirishlar
@@ -485,7 +446,8 @@ export default function UserDetailsPage() {
 
                 <p className="mt-2 text-2xl font-bold">
                   {formatDuration(
-                    activityStats?.lessonDuration.today ?? 0
+                    activityStats?.lessonDuration.today ??
+                      0,
                   )}
                 </p>
               </div>
@@ -497,7 +459,8 @@ export default function UserDetailsPage() {
 
                 <p className="mt-2 text-2xl font-bold">
                   {formatDuration(
-                    activityStats?.lessonDuration.week ?? 0
+                    activityStats?.lessonDuration.week ??
+                      0,
                   )}
                 </p>
               </div>
@@ -509,7 +472,8 @@ export default function UserDetailsPage() {
 
                 <p className="mt-2 text-2xl font-bold">
                   {formatDuration(
-                    activityStats?.lessonDuration.month ?? 0
+                    activityStats?.lessonDuration.month ??
+                      0,
                   )}
                 </p>
               </div>
@@ -520,7 +484,8 @@ export default function UserDetailsPage() {
                 </p>
 
                 <p className="mt-2 text-3xl font-bold">
-                  {activityStats?.totalLessonsViewed ?? 0}
+                  {activityStats?.totalLessonsViewed ??
+                    0}
                 </p>
               </div>
 
@@ -531,24 +496,19 @@ export default function UserDetailsPage() {
 
                 <p className="mt-2 text-3xl font-bold">
                   {formatDuration(
-                    activityStats?.lessonDuration.total ?? 0
+                    activityStats?.lessonDuration.total ??
+                      0,
                   )}
                 </p>
               </div>
-
             </div>
-
           </>
         )}
-
       </div>
 
       {/* Recent Activity */}
-
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-
         <div className="border-b border-[var(--color-border)] p-6">
-
           <h2 className="text-lg font-semibold">
             So‘nggi faoliyat
           </h2>
@@ -556,16 +516,14 @@ export default function UserDetailsPage() {
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             Foydalanuvchining oxirgi faoliyatlari.
           </p>
-
         </div>
 
         {user.activities.length === 0 ? (
           <div className="p-8 text-center text-[var(--color-muted)]">
-            Faoliyat ma'lumotlari mavjud emas.
+            Faoliyat ma&apos;lumotlari mavjud emas.
           </div>
         ) : (
           <div className="divide-y">
-
             {user.activities
               .slice(0, 20)
               .map((activity) => (
@@ -573,17 +531,16 @@ export default function UserDetailsPage() {
                   key={activity.id}
                   className="flex items-center justify-between gap-4 p-5"
                 >
-
                   <div>
                     <p className="font-medium">
                       {getActivityLabel(
-                        activity.type
+                        activity.type,
                       )}
                     </p>
 
                     <p className="mt-1 text-sm text-[var(--color-muted)]">
                       {formatDateTime(
-                        activity.startedAt
+                        activity.startedAt,
                       )}
                     </p>
                   </div>
@@ -593,31 +550,25 @@ export default function UserDetailsPage() {
                     activity.durationSeconds > 0 && (
                       <Badge variant="info">
                         {formatDuration(
-                          activity.durationSeconds
+                          activity.durationSeconds,
                         )}
                       </Badge>
                     )}
-
                 </div>
               ))}
-
           </div>
         )}
-
       </div>
 
       {/* User Information */}
-
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
-            Foydalanuvchi ma'lumotlari
+            Foydalanuvchi ma&apos;lumotlari
           </h2>
         </div>
 
         <div className="grid gap-6 p-6 md:grid-cols-2">
-
           <div>
             <p className="text-sm text-[var(--color-muted)]">
               To‘liq ism
@@ -662,9 +613,7 @@ export default function UserDetailsPage() {
             </p>
 
             <p className="mt-1 font-medium">
-              {formatDate(
-                user.createdAt
-              )}
+              {formatDate(user.createdAt)}
             </p>
           </div>
 
@@ -676,20 +625,16 @@ export default function UserDetailsPage() {
             <p className="mt-1 font-medium">
               {user.lastLoginAt
                 ? formatDateTime(
-                    user.lastLoginAt
+                    user.lastLoginAt,
                   )
                 : "Hali kirmagan"}
             </p>
           </div>
-
         </div>
-
       </div>
 
       {/* Courses */}
-
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
             Yozilgan kurslar
@@ -702,43 +647,33 @@ export default function UserDetailsPage() {
           </div>
         ) : (
           <div className="divide-y">
-
             {user.enrollments.map(
               (enrollment) => (
                 <div
                   key={enrollment.id}
                   className="flex items-center justify-between gap-4 p-5"
                 >
-
                   <div>
                     <p className="font-medium">
-                      {
-                        enrollment.course
-                          .title
-                      }
+                      {enrollment.course.title}
                     </p>
 
                     <p className="mt-1 text-sm text-[var(--color-muted)]">
                       Yozilgan sana:{" "}
                       {formatDate(
-                        enrollment.enrolledAt
+                        enrollment.enrolledAt,
                       )}
                     </p>
                   </div>
-
                 </div>
-              )
+              ),
             )}
-
           </div>
         )}
-
       </div>
 
       {/* Quiz Attempts */}
-
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
             Quiz natijalari
@@ -751,14 +686,12 @@ export default function UserDetailsPage() {
           </div>
         ) : (
           <div className="divide-y">
-
             {user.quizAttempts.map(
               (attempt) => (
                 <div
                   key={attempt.id}
                   className="flex items-center justify-between gap-4 p-5"
                 >
-
                   <div>
                     <p className="font-medium">
                       Natija
@@ -772,7 +705,7 @@ export default function UserDetailsPage() {
 
                     <p className="mt-1 text-xs text-[var(--color-muted)]">
                       {formatDateTime(
-                        attempt.createdAt
+                        attempt.createdAt,
                       )}
                     </p>
                   </div>
@@ -788,20 +721,15 @@ export default function UserDetailsPage() {
                       ? "O‘tgan"
                       : "Yiqilgan"}
                   </Badge>
-
                 </div>
-              )
+              ),
             )}
-
           </div>
         )}
-
       </div>
 
       {/* Certificates */}
-
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
             Sertifikatlar
@@ -814,19 +742,14 @@ export default function UserDetailsPage() {
           </div>
         ) : (
           <div className="divide-y">
-
             {user.certificates.map(
               (certificate) => (
                 <div
                   key={certificate.id}
                   className="p-5"
                 >
-
                   <p className="font-medium">
-                    {
-                      certificate.course
-                        .title
-                    }
+                    {certificate.course.title}
                   </p>
 
                   <p className="mt-1 text-sm">
@@ -841,23 +764,18 @@ export default function UserDetailsPage() {
                   <p className="mt-1 text-sm text-[var(--color-muted)]">
                     Berilgan sana:{" "}
                     {formatDate(
-                      certificate.issuedAt
+                      certificate.issuedAt,
                     )}
                   </p>
-
                 </div>
-              )
+              ),
             )}
-
           </div>
         )}
-
       </div>
 
       {/* Lesson Progress */}
-
       <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-
         <div className="border-b border-[var(--color-border)] p-6">
           <h2 className="text-lg font-semibold">
             Dars progressi
@@ -870,14 +788,12 @@ export default function UserDetailsPage() {
           </div>
         ) : (
           <div className="divide-y">
-
             {user.lessonProgress.map(
               (progress) => (
                 <div
                   key={progress.id}
                   className="flex items-center justify-between p-5"
                 >
-
                   <div>
                     <p className="font-medium">
                       Lesson ID:{" "}
@@ -888,7 +804,7 @@ export default function UserDetailsPage() {
                       <p className="mt-1 text-sm text-[var(--color-muted)]">
                         Tugatilgan:{" "}
                         {formatDateTime(
-                          progress.completedAt
+                          progress.completedAt,
                         )}
                       </p>
                     )}
@@ -905,16 +821,12 @@ export default function UserDetailsPage() {
                       ? "Tugatilgan"
                       : "Jarayonda"}
                   </Badge>
-
                 </div>
-              )
+              ),
             )}
-
           </div>
         )}
-
       </div>
-
     </div>
   );
 }

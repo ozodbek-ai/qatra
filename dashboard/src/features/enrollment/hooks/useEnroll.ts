@@ -7,6 +7,8 @@ import { toast } from "sonner";
 
 import { enroll } from "../api/enroll";
 
+import { isAxiosError } from "axios";
+
 export function useEnroll() {
   const queryClient = useQueryClient();
 
@@ -27,12 +29,13 @@ export function useEnroll() {
       });
     },
 
-    onError: (error: any) => {
-      const message =
-        error?.response?.data?.message ??
-        "Kursga yozilishda xatolik yuz berdi.";
+    onError: (error: unknown) => {
+  const message = isAxiosError<{ message?: string }>(error)
+    ? error.response?.data?.message ??
+      "Kursga yozilishda xatolik yuz berdi."
+    : "Kursga yozilishda xatolik yuz berdi.";
 
-      toast.error(message);
-    },
+  toast.error(message);
+},
   });
 }

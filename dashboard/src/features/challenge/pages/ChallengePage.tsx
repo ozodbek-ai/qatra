@@ -32,10 +32,7 @@ import { getChallengeProgress } from "../api/getChallengeProgress";
 
 import ChallengeCard from "../components/ChallengeCard";
 
-import type {
-  Challenge,
-} from "../types/challenge.types";
-
+import type { Challenge } from "../types/challenge.types";
 
 type ChatUser = {
   id: string;
@@ -44,22 +41,18 @@ type ChatUser = {
   avatarUrl?: string | null;
 };
 
-
 type CourseOption = {
   id: string;
   title: string;
   imageUrl?: string | null;
 };
 
-
 type MyCourseItem = {
   id?: string;
   title?: string;
   imageUrl?: string | null;
-
   course?: CourseOption;
 };
-
 
 type ChallengeTab =
   | "ALL"
@@ -67,10 +60,17 @@ type ChallengeTab =
   | "ACCEPTED"
   | "COMPLETED";
 
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
 
 function getErrorMessage(
   error: unknown,
-  fallback: string
+  fallback: string,
 ) {
   if (
     typeof error === "object" &&
@@ -78,13 +78,7 @@ function getErrorMessage(
     "response" in error
   ) {
     const response = (
-      error as {
-        response?: {
-          data?: {
-            message?: string;
-          };
-        };
-      }
+      error as ApiError
     ).response;
 
     if (response?.data?.message) {
@@ -95,9 +89,8 @@ function getErrorMessage(
   return fallback;
 }
 
-
 function getCourseFromItem(
-  item: MyCourseItem
+  item: MyCourseItem,
 ): CourseOption | null {
   if (
     item.course?.id &&
@@ -120,25 +113,23 @@ function getCourseFromItem(
   return null;
 }
 
-
 export default function ChallengePage() {
-  const { user } =
-    useAuthStore();
+  const { user } = useAuthStore();
 
   const [challenges, setChallenges] =
     useState<Challenge[]>([]);
 
   const [users, setUsers] =
-  useState<ChatUser[]>([]);
+    useState<ChatUser[]>([]);
 
-const [emailSearch, setEmailSearch] =
-  useState("");
+  const [emailSearch, setEmailSearch] =
+    useState("");
 
-const [searchingUsers, setSearchingUsers] =
-  useState(false);
+  const [searchingUsers, setSearchingUsers] =
+    useState(false);
 
-const searchTimeoutRef =
-  useRef<number | null>(null);
+  const searchTimeoutRef =
+    useRef<number | null>(null);
 
   const [courses, setCourses] =
     useState<MyCourseItem[]>([]);
@@ -170,9 +161,11 @@ const searchTimeoutRef =
 
   const [activeTab, setActiveTab] =
     useState<ChallengeTab>("ALL");
-    const [selectedOpponent, setSelectedOpponent] =
-  useState<ChatUser | null>(null);
 
+  const [
+    selectedOpponent,
+    setSelectedOpponent,
+  ] = useState<ChatUser | null>(null);
 
   const loadData = useCallback(
     async () => {
@@ -180,38 +173,35 @@ const searchTimeoutRef =
         setLoading(true);
 
         const [
-  challengesResponse,
-  coursesData,
-] = await Promise.all([
-  getMyChallenges(),
-  getMyCourses(),
-]);
+          challengesResponse,
+          coursesData,
+        ] = await Promise.all([
+          getMyChallenges(),
+          getMyCourses(),
+        ]);
 
         setChallenges(
-          challengesResponse.data ?? []
+          challengesResponse.data ?? [],
         );
 
-        
-
         setCourses(
-          coursesData as MyCourseItem[]
+          coursesData as MyCourseItem[],
         );
       } catch (error) {
         console.error(
           "Challenge data loading error:",
-          error
+          error,
         );
 
         toast.error(
-          "Ma'lumotlarni yuklashda xatolik yuz berdi."
+          "Ma'lumotlarni yuklashda xatolik yuz berdi.",
         );
       } finally {
         setLoading(false);
       }
     },
-    [user?.id]
+    [],
   );
-
 
   const refreshChallenges =
     useCallback(async () => {
@@ -220,135 +210,136 @@ const searchTimeoutRef =
           await getMyChallenges();
 
         setChallenges(
-          response.data ?? []
+          response.data ?? [],
         );
       } catch (error) {
         console.error(
           "Challenge refresh error:",
-          error
+          error,
         );
       }
     }, []);
 
-    const handleUserSearch =
-  useCallback(
-    (value: string) => {
-      setEmailSearch(value);
+  const handleUserSearch =
+    useCallback(
+      (value: string) => {
+        setEmailSearch(value);
+        setOpponentId("");
+        setSelectedOpponent(null);
 
-setOpponentId("");
+        if (
+          searchTimeoutRef.current !== null
+        ) {
+          window.clearTimeout(
+            searchTimeoutRef.current,
+          );
+        }
 
-setSelectedOpponent(null);
+        const searchValue =
+          value.trim();
 
+        if (searchValue.length < 3) {
+          setUsers([]);
+          setSearchingUsers(false);
+          return;
+        }
+
+        setSearchingUsers(true);
+
+        searchTimeoutRef.current =
+          window.setTimeout(
+            async () => {
+              try {
+                const usersData =
+                  await getChatUsers(
+                    searchValue,
+                  );
+
+                const filteredUsers =
+                  usersData.filter(
+                    (chatUser) =>
+                      chatUser.id !== user?.id,
+                  );
+
+                setUsers(filteredUsers);
+              } catch (error) {
+                console.error(
+                  "User search error:",
+                  error,
+                );
+
+                setUsers([]);
+              } finally {
+                setSearchingUsers(false);
+              }
+            },
+            500,
+          );
+      },
+      [user?.id],
+    );
+
+  /*
+   * Initial data loading.
+   *
+   * queueMicrotask orqali chaqirish React 19
+   * set-state-in-effect lint qoidasidagi
+   * synchronous state update holatini oldini oladi.
+   */
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadData();
+    });
+  }, [loadData]);
+
+  /*
+   * Search timeout cleanup.
+   */
+  useEffect(() => {
+    return () => {
       if (
         searchTimeoutRef.current !== null
       ) {
         window.clearTimeout(
-          searchTimeoutRef.current
+          searchTimeoutRef.current,
         );
       }
+    };
+  }, []);
 
-      const searchValue =
-        value.trim();
-
-      if (searchValue.length < 3) {
-        setUsers([]);
-        setSearchingUsers(false);
-        return;
+  /*
+   * Challenge refresh va tab visibility.
+   */
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        void refreshChallenges();
       }
+    };
 
-      setSearchingUsers(true);
-
-      searchTimeoutRef.current =
-        window.setTimeout(
-          async () => {
-            try {
-              const usersData =
-                await getChatUsers(
-                  searchValue
-                );
-
-              const filteredUsers =
-                usersData.filter(
-                  (chatUser) =>
-                    chatUser.id !== user?.id
-                );
-
-              setUsers(filteredUsers);
-            } catch (error) {
-              console.error(
-                "User search error:",
-                error
-              );
-
-              setUsers([]);
-            } finally {
-              setSearchingUsers(false);
-            }
-          },
-          500
-        );
-    },
-    [user?.id]
-  );
-
-
-  useEffect(() => {
-  void loadData();
-
-  const refreshIfVisible = () => {
-    if (
-      document.visibilityState ===
-      "visible"
-    ) {
-      void refreshChallenges();
-    }
-  };
-
-  useEffect(() => {
-  return () => {
-    if (
-      searchTimeoutRef.current !== null
-    ) {
-      window.clearTimeout(
-        searchTimeoutRef.current
+    const interval =
+      window.setInterval(
+        refreshIfVisible,
+        10000,
       );
-    }
-  };
-}, []);
 
-  const interval =
-    window.setInterval(
-      refreshIfVisible,
-      10000
-    );
-
-  const handleVisibilityChange = () => {
-    if (
-      document.visibilityState ===
-      "visible"
-    ) {
-      void refreshChallenges();
-    }
-  };
-
-  document.addEventListener(
-    "visibilitychange",
-    handleVisibilityChange
-  );
-
-  return () => {
-    window.clearInterval(interval);
-
-    document.removeEventListener(
+    document.addEventListener(
       "visibilitychange",
-      handleVisibilityChange
+      refreshIfVisible,
     );
-  };
-}, [
-  loadData,
-  refreshChallenges,
-]);
 
+    return () => {
+      window.clearInterval(interval);
+
+      document.removeEventListener(
+        "visibilitychange",
+        refreshIfVisible,
+      );
+    };
+  }, [refreshChallenges]);
 
   async function handleManualRefresh() {
     try {
@@ -357,22 +348,21 @@ setSelectedOpponent(null);
       await refreshChallenges();
 
       toast.success(
-        "Challenge'lar yangilandi."
+        "Challenge'lar yangilandi.",
       );
     } finally {
       setRefreshing(false);
     }
   }
 
-
   async function handleCreateChallenge(
-    event: FormEvent<HTMLFormElement>
+    event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
     if (!opponentId) {
       toast.error(
-        "Raqibni tanlang."
+        "Raqibni tanlang.",
       );
 
       return;
@@ -380,7 +370,7 @@ setSelectedOpponent(null);
 
     if (!courseId) {
       toast.error(
-        "Kursni tanlang."
+        "Kursni tanlang.",
       );
 
       return;
@@ -395,45 +385,46 @@ setSelectedOpponent(null);
       });
 
       toast.success(
-        "Challenge muvaffaqiyatli yuborildi!"
+        "Challenge muvaffaqiyatli yuborildi!",
       );
 
       setOpponentId("");
-setCourseId("");
-setEmailSearch("");
-setUsers([]);
-
+      setCourseId("");
+      setEmailSearch("");
+      setUsers([]);
+      setSelectedOpponent(null);
       setShowCreateForm(false);
 
       await refreshChallenges();
     } catch (error) {
       console.error(
         "Create challenge error:",
-        error
+        error,
       );
 
       toast.error(
         getErrorMessage(
           error,
-          "Challenge yaratishda xatolik yuz berdi."
-        )
+          "Challenge yaratishda xatolik yuz berdi.",
+        ),
       );
     } finally {
       setCreating(false);
     }
   }
 
-
   async function handleAccept(
-    challengeId: string
+    challengeId: string,
   ) {
     try {
       setActionLoading(challengeId);
 
-      await acceptChallenge(challengeId);
+      await acceptChallenge(
+        challengeId,
+      );
 
       toast.success(
-        "Challenge qabul qilindi!"
+        "Challenge qabul qilindi!",
       );
 
       await refreshChallenges();
@@ -441,25 +432,26 @@ setUsers([]);
       toast.error(
         getErrorMessage(
           error,
-          "Challenge-ni qabul qilishda xatolik yuz berdi."
-        )
+          "Challenge-ni qabul qilishda xatolik yuz berdi.",
+        ),
       );
     } finally {
       setActionLoading(null);
     }
   }
-
 
   async function handleDecline(
-    challengeId: string
+    challengeId: string,
   ) {
     try {
       setActionLoading(challengeId);
 
-      await declineChallenge(challengeId);
+      await declineChallenge(
+        challengeId,
+      );
 
       toast.success(
-        "Challenge rad etildi."
+        "Challenge rad etildi.",
       );
 
       await refreshChallenges();
@@ -467,21 +459,20 @@ setUsers([]);
       toast.error(
         getErrorMessage(
           error,
-          "Challenge-ni rad etishda xatolik yuz berdi."
-        )
+          "Challenge-ni rad etishda xatolik yuz berdi.",
+        ),
       );
     } finally {
       setActionLoading(null);
     }
   }
 
-
   async function handleDelete(
-    challengeId: string
+    challengeId: string,
   ) {
     const confirmed =
       window.confirm(
-        "Challenge-ni bekor qilmoqchimisiz?"
+        "Challenge-ni bekor qilmoqchimisiz?",
       );
 
     if (!confirmed) {
@@ -491,10 +482,12 @@ setUsers([]);
     try {
       setActionLoading(challengeId);
 
-      await deleteChallenge(challengeId);
+      await deleteChallenge(
+        challengeId,
+      );
 
       toast.success(
-        "Challenge bekor qilindi."
+        "Challenge bekor qilindi.",
       );
 
       await refreshChallenges();
@@ -502,42 +495,40 @@ setUsers([]);
       toast.error(
         getErrorMessage(
           error,
-          "Challenge-ni o'chirishda xatolik yuz berdi."
-        )
+          "Challenge-ni o'chirishda xatolik yuz berdi.",
+        ),
       );
     } finally {
       setActionLoading(null);
     }
   }
 
-
   async function handleRefreshProgress(
-    challengeId: string
+    challengeId: string,
   ) {
     try {
       setActionLoading(challengeId);
 
       await getChallengeProgress(
-        challengeId
+        challengeId,
       );
 
       await refreshChallenges();
 
       toast.success(
-        "Challenge progress yangilandi."
+        "Challenge progress yangilandi.",
       );
     } catch (error) {
       toast.error(
         getErrorMessage(
           error,
-          "Progressni yangilashda xatolik yuz berdi."
-        )
+          "Progressni yangilashda xatolik yuz berdi.",
+        ),
       );
     } finally {
       setActionLoading(null);
     }
   }
-
 
   const filteredChallenges =
     useMemo(() => {
@@ -547,32 +538,30 @@ setUsers([]);
 
       return challenges.filter(
         (challenge) =>
-          challenge.status === activeTab
+          challenge.status === activeTab,
       );
     }, [
       challenges,
       activeTab,
     ]);
 
-
   const pendingCount =
     challenges.filter(
       (challenge) =>
-        challenge.status === "PENDING"
+        challenge.status === "PENDING",
     ).length;
 
   const activeCount =
     challenges.filter(
       (challenge) =>
-        challenge.status === "ACCEPTED"
+        challenge.status === "ACCEPTED",
     ).length;
 
   const completedCount =
     challenges.filter(
       (challenge) =>
-        challenge.status === "COMPLETED"
+        challenge.status === "COMPLETED",
     ).length;
-
 
   const tabs: {
     id: ChallengeTab;
@@ -606,7 +595,6 @@ setUsers([]);
     },
   ];
 
-
   if (loading) {
     return (
       <div className="flex min-h-[500px] items-center justify-center">
@@ -621,14 +609,9 @@ setUsers([]);
     );
   }
 
-
   return (
     <div className="mx-auto w-full max-w-7xl p-4 md:p-6 lg:p-8">
-
-      {/* ================= HEADER ================= */}
-
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
         <div>
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
@@ -649,9 +632,7 @@ setUsers([]);
           </div>
         </div>
 
-
         <div className="flex flex-wrap gap-3">
-
           <button
             type="button"
             onClick={() =>
@@ -672,12 +653,11 @@ setUsers([]);
             Yangilash
           </button>
 
-
           <button
             type="button"
             onClick={() =>
               setShowCreateForm(
-                (value) => !value
+                (value) => !value,
               )
             }
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
@@ -686,12 +666,8 @@ setUsers([]);
 
             Yangi challenge
           </button>
-
         </div>
       </div>
-
-
-      {/* ================= CREATE FORM ================= */}
 
       {showCreateForm && (
         <form
@@ -700,7 +676,6 @@ setUsers([]);
           }
           className="mt-6 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm md:p-6"
         >
-
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
               <Swords size={20} />
@@ -717,156 +692,182 @@ setUsers([]);
             </div>
           </div>
 
-
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-
-            {/* OPPONENT */}
-
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Raqib
               </label>
 
               <div>
-  <label className="mb-2 block text-sm font-medium text-slate-700">
-    Raqib email manzili
-  </label>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Raqib email manzili
+                </label>
 
-  <input
-    type="email"
-    value={emailSearch}
-    onChange={(event) =>
-      void handleUserSearch(
-        event.target.value
-      )
-    }
-    placeholder="example@email.com"
-    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-  />
-
-  <p className="mt-2 text-xs text-slate-400">
-    Foydalanuvchini email manzili orqali qidiring.
-  </p>
-
-  {searchingUsers && (
-    <p className="mt-3 text-sm text-slate-500">
-      Qidirilmoqda...
-    </p>
-  )}
-
-  {!searchingUsers &&
-    emailSearch.trim().length >= 3 &&
-    users.length === 0 && (
-      <p className="mt-3 text-sm text-slate-500">
-        Bunday foydalanuvchi topilmadi.
-      </p>
-    )}
-
-  {users.length > 0 && (
-    <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
-      {users.map((chatUser) => {
-        const isSelected =
-          opponentId === chatUser.id;
-
-        return (
-          <button
-            key={chatUser.id}
-            type="button"
-            onClick={() => {
-  setOpponentId(chatUser.id);
-
-  setSelectedOpponent(chatUser);
-
-  setEmailSearch(
-    chatUser.email ?? ""
-  );
-
-  setUsers([]);
-}}
-            className={[
-              "flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left last:border-b-0 transition",
-
-              isSelected
-                ? "bg-blue-50"
-                : "hover:bg-slate-50",
-            ].join(" ")}
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 font-semibold text-blue-600">
-              {chatUser.avatarUrl ? (
-                <img
-                  src={chatUser.avatarUrl}
-                  alt={chatUser.fullName}
-                  className="h-full w-full object-cover"
+                <input
+                  type="email"
+                  value={emailSearch}
+                  onChange={(event) =>
+                    handleUserSearch(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="example@email.com"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
-              ) : (
-                chatUser.fullName
-                  .charAt(0)
-                  .toUpperCase()
-              )}
+
+                <p className="mt-2 text-xs text-slate-400">
+                  Foydalanuvchini email manzili
+                  orqali qidiring.
+                </p>
+
+                {searchingUsers && (
+                  <p className="mt-3 text-sm text-slate-500">
+                    Qidirilmoqda...
+                  </p>
+                )}
+
+                {!searchingUsers &&
+                  emailSearch.trim().length >=
+                    3 &&
+                  users.length === 0 && (
+                    <p className="mt-3 text-sm text-slate-500">
+                      Bunday foydalanuvchi topilmadi.
+                    </p>
+                  )}
+
+                {users.length > 0 && (
+                  <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    {users.map(
+                      (chatUser) => {
+                        const isSelected =
+                          opponentId ===
+                          chatUser.id;
+
+                        return (
+                          <button
+                            key={
+                              chatUser.id
+                            }
+                            type="button"
+                            onClick={() => {
+                              setOpponentId(
+                                chatUser.id,
+                              );
+
+                              setSelectedOpponent(
+                                chatUser,
+                              );
+
+                              setEmailSearch(
+                                chatUser.email ??
+                                  "",
+                              );
+
+                              setUsers([]);
+                            }}
+                            className={[
+                              "flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left last:border-b-0 transition",
+                              isSelected
+                                ? "bg-blue-50"
+                                : "hover:bg-slate-50",
+                            ].join(" ")}
+                          >
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 font-semibold text-blue-600">
+                              {chatUser.avatarUrl ? (
+                                <img
+                                  src={
+                                    chatUser.avatarUrl
+                                  }
+                                  alt={
+                                    chatUser.fullName
+                                  }
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                chatUser.fullName
+                                  .charAt(
+                                    0,
+                                  )
+                                  .toUpperCase()
+                              )}
+                            </div>
+
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-slate-900">
+                                {
+                                  chatUser.fullName
+                                }
+                              </p>
+
+                              <p className="truncate text-sm text-slate-500">
+                                {
+                                  chatUser.email
+                                }
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      },
+                    )}
+                  </div>
+                )}
+
+                {selectedOpponent && (
+                  <div className="mt-3 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 font-semibold text-emerald-700">
+                        {selectedOpponent.avatarUrl ? (
+                          <img
+                            src={
+                              selectedOpponent.avatarUrl
+                            }
+                            alt={
+                              selectedOpponent.fullName
+                            }
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          selectedOpponent.fullName
+                            .charAt(
+                              0,
+                            )
+                            .toUpperCase()
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {
+                            selectedOpponent.fullName
+                          }
+                        </p>
+
+                        <p className="truncate text-xs text-slate-500">
+                          {
+                            selectedOpponent.email
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedOpponent(
+                          null,
+                        );
+                        setOpponentId("");
+                        setEmailSearch("");
+                        setUsers([]);
+                      }}
+                      className="ml-3 shrink-0 rounded-lg px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100"
+                    >
+                      Bekor qilish
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-
-            <div className="min-w-0">
-              <p className="truncate font-medium text-slate-900">
-                {chatUser.fullName}
-              </p>
-
-              <p className="truncate text-sm text-slate-500">
-                {chatUser.email}
-              </p>
-            </div>
-          </button>
-        );
-      })}
-    </div>
-  )}
-
-  {selectedOpponent && (
-  <div className="mt-3 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-    <div className="flex min-w-0 items-center gap-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 font-semibold text-emerald-700">
-        {selectedOpponent.avatarUrl ? (
-          <img
-            src={selectedOpponent.avatarUrl}
-            alt={selectedOpponent.fullName}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          selectedOpponent.fullName
-            .charAt(0)
-            .toUpperCase()
-        )}
-      </div>
-
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-slate-900">
-          {selectedOpponent.fullName}
-        </p>
-
-        <p className="truncate text-xs text-slate-500">
-          {selectedOpponent.email}
-        </p>
-      </div>
-    </div>
-
-    <button
-      type="button"
-      onClick={() => {
-        setSelectedOpponent(null);
-        setOpponentId("");
-        setEmailSearch("");
-        setUsers([]);
-      }}
-      className="ml-3 shrink-0 rounded-lg px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100"
-    >
-      Bekor qilish
-    </button>
-  </div>
-)}
-</div>
-            </div>
-
-
-            {/* COURSE */}
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -877,7 +878,7 @@ setUsers([]);
                 value={courseId}
                 onChange={(event) =>
                   setCourseId(
-                    event.target.value
+                    event.target.value,
                   )
                 }
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -890,9 +891,9 @@ setUsers([]);
                   .map(getCourseFromItem)
                   .filter(
                     (
-                      course
+                      course,
                     ): course is CourseOption =>
-                      course !== null
+                      course !== null,
                   )
                   .map((course) => (
                     <option
@@ -904,30 +905,24 @@ setUsers([]);
                   ))}
               </select>
             </div>
-
           </div>
 
-
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-
             <button
               type="button"
               disabled={creating}
               onClick={() => {
-  setShowCreateForm(false);
-
-  setOpponentId("");
-  setSelectedOpponent(null);
-
-  setCourseId("");
-  setEmailSearch("");
-  setUsers([]);
-}}
+                setShowCreateForm(false);
+                setOpponentId("");
+                setSelectedOpponent(null);
+                setCourseId("");
+                setEmailSearch("");
+                setUsers([]);
+              }}
               className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               Bekor qilish
             </button>
-
 
             <button
               type="submit"
@@ -940,17 +935,11 @@ setUsers([]);
                 ? "Yuborilmoqda..."
                 : "Challenge yuborish"}
             </button>
-
           </div>
-
         </form>
       )}
 
-
-      {/* ================= STATISTICS ================= */}
-
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <p className="text-sm text-slate-500">
             Jami challenge
@@ -960,7 +949,6 @@ setUsers([]);
             {challenges.length}
           </p>
         </div>
-
 
         <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5">
           <p className="text-sm text-amber-700">
@@ -972,7 +960,6 @@ setUsers([]);
           </p>
         </div>
 
-
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm text-blue-700">
             Faol challenge
@@ -983,7 +970,6 @@ setUsers([]);
           </p>
         </div>
 
-
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
           <p className="text-sm text-emerald-700">
             Yakunlangan
@@ -993,15 +979,10 @@ setUsers([]);
             {completedCount}
           </p>
         </div>
-
       </div>
-
-
-      {/* ================= TABS ================= */}
 
       <div className="mt-8 overflow-x-auto">
         <div className="flex min-w-max gap-2 rounded-2xl border border-slate-200 bg-white p-2">
-
           {tabs.map((tab) => {
             const Icon = tab.icon;
 
@@ -1017,7 +998,6 @@ setUsers([]);
                 }
                 className={[
                   "flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition",
-
                   isActive
                     ? "bg-blue-600 text-white shadow-sm"
                     : "text-slate-600 hover:bg-slate-100",
@@ -1030,7 +1010,6 @@ setUsers([]);
                 <span
                   className={[
                     "flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 text-xs",
-
                     isActive
                       ? "bg-white/20 text-white"
                       : "bg-slate-100 text-slate-500",
@@ -1041,16 +1020,12 @@ setUsers([]);
               </button>
             );
           })}
-
         </div>
       </div>
 
-
-      {/* ================= CHALLENGE LIST ================= */}
-
-      {filteredChallenges.length === 0 ? (
+      {filteredChallenges.length ===
+      0 ? (
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
-
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
             <Swords size={30} />
           </div>
@@ -1075,11 +1050,9 @@ setUsers([]);
 
             Birinchi challenge yaratish
           </button>
-
         </div>
       ) : (
         <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-
           {filteredChallenges.map(
             (challenge) => (
               <div
@@ -1106,9 +1079,6 @@ setUsers([]);
                   onDelete={handleDelete}
                 />
 
-
-                {/* Progress refresh */}
-
                 {challenge.status ===
                   "ACCEPTED" && (
                   <button
@@ -1119,7 +1089,7 @@ setUsers([]);
                     }
                     onClick={() =>
                       void handleRefreshProgress(
-                        challenge.id
+                        challenge.id,
                       )
                     }
                     className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm backdrop-blur transition hover:bg-white hover:text-blue-600 disabled:opacity-50"
@@ -1137,12 +1107,10 @@ setUsers([]);
                   </button>
                 )}
               </div>
-            )
+            ),
           )}
-
         </div>
       )}
-
     </div>
   );
 }

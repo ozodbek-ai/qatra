@@ -1,4 +1,10 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+
+import { isAxiosError } from "axios";
 
 import { Button, Input } from "@/components/ui";
 import { api } from "@/lib/axios";
@@ -58,9 +64,10 @@ export default function EnrollmentsPage() {
   const [error, setError] =
     useState("");
 
-  const loadEnrollments = async (
-    currentPage = page,
-    currentSearch = search
+const loadEnrollments = useCallback(
+  async (
+    currentPage: number,
+    currentSearch: string,
   ) => {
     try {
       setLoading(true);
@@ -73,7 +80,6 @@ export default function EnrollmentsPage() {
             params: {
               page: currentPage,
               limit: 10,
-
               ...(currentSearch.trim()
                 ? {
                     search:
@@ -81,42 +87,42 @@ export default function EnrollmentsPage() {
                   }
                 : {}),
             },
-          }
+          },
         );
 
-      const data =
-        response.data.data;
+      const data = response.data.data;
 
       setEnrollments(data.items);
-      setTotal(
-        data.pagination.total
-      );
-
+      setTotal(data.pagination.total);
       setTotalPages(
-        data.pagination.totalPages
+        data.pagination.totalPages,
       );
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message ||
+    } catch (err: unknown) {
+      const message = isAxiosError<{
+        message?: string;
+      }>(err)
+        ? err.response?.data?.message ??
           "Enrollmentlarni yuklab bo'lmadi."
-      );
+        : "Enrollmentlarni yuklab bo'lmadi.";
+
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  },
+  [],
+);
 
-  useEffect(() => {
-    loadEnrollments(1, "");
-  }, []);
+useEffect(() => {
+  queueMicrotask(() => {
+    void loadEnrollments(1, "");
+  });
+}, [loadEnrollments]);
 
-  const handleSearch = () => {
-    setPage(1);
-
-    loadEnrollments(
-      1,
-      search
-    );
-  };
+const handleSearch = () => {
+  setPage(1);
+  void loadEnrollments(1, search);
+};
 
   const handlePageChange = (
     nextPage: number
@@ -129,6 +135,7 @@ export default function EnrollmentsPage() {
     }
 
     setPage(nextPage);
+void loadEnrollments(nextPage, search);
 
     loadEnrollments(
       nextPage,

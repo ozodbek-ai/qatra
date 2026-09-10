@@ -5,6 +5,10 @@ import {
   forgotPassword,
 } from "../api/forgotPassword";
 
+type ApiErrorResponse = {
+  message?: string;
+};
+
 export function useForgotPassword() {
   return useMutation({
     mutationFn: forgotPassword,
@@ -16,9 +20,15 @@ export function useForgotPassword() {
       );
     },
 
-    onError(error: any) {
+    onError(error) {
+      const response = error as {
+        response?: {
+          data?: ApiErrorResponse;
+        };
+      };
+
       toast.error(
-        error?.response?.data?.message ??
+        response.response?.data?.message ??
           "Parolni tiklashda xatolik yuz berdi.",
       );
     },

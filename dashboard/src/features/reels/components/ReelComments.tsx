@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useState,
 } from "react";
 
@@ -41,12 +40,6 @@ export default function ReelComments({
       reelId
     );
 
-  useEffect(() => {
-    if (!open) {
-      setText("");
-    }
-  }, [open]);
-
   if (!open) {
     return null;
   }
@@ -83,7 +76,10 @@ export default function ReelComments({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+  setText("");
+  onClose();
+}}
           >
             <X />
           </button>

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch} from "react-hook-form";
 
 import {
   Button,
@@ -34,15 +34,17 @@ export default function ResetPasswordPage() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } =
     useForm<ResetPasswordForm>({
       mode: "onSubmit",
     });
 
-  const password =
-    watch("password");
+  const password = useWatch({
+  control,
+  name: "password",
+});
 
   const onSubmit = (
     data: ResetPasswordForm,

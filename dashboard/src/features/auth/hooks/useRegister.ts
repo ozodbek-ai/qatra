@@ -4,6 +4,17 @@ import { useNavigate } from "react-router-dom";
 
 import { register } from "../api/register";
 
+type ApiErrorResponse = {
+  message?: string;
+};
+
+type ApiError = {
+  response?: {
+    status?: number;
+    data?: ApiErrorResponse;
+  };
+};
+
 export function useRegister() {
   const navigate = useNavigate();
 
@@ -12,7 +23,7 @@ export function useRegister() {
 
     onSuccess() {
       toast.success(
-        "Hisobingiz muvaffaqiyatli yaratildi. Endi tizimga kiring."
+        "Hisobingiz muvaffaqiyatli yaratildi. Endi tizimga kiring.",
       );
 
       navigate("/login", {
@@ -20,17 +31,20 @@ export function useRegister() {
       });
     },
 
-    onError(error: any) {
+    onError(error) {
+      const apiError =
+        error as ApiError;
+
       const status =
-        error?.response?.status;
+        apiError.response?.status;
 
       const message =
-        error?.response?.data?.message;
+        apiError.response?.data?.message;
 
       if (status === 409) {
         toast.error(
           message ??
-            "Bu email allaqachon ro'yxatdan o'tgan."
+            "Bu email allaqachon ro'yxatdan o'tgan.",
         );
 
         return;
@@ -39,7 +53,7 @@ export function useRegister() {
       if (status === 400) {
         toast.error(
           message ??
-            "Kiritilgan ma'lumotlar noto'g'ri."
+            "Kiritilgan ma'lumotlar noto'g'ri.",
         );
 
         return;
@@ -47,7 +61,7 @@ export function useRegister() {
 
       toast.error(
         message ??
-          "Hisob yaratishda xatolik yuz berdi."
+          "Hisob yaratishda xatolik yuz berdi.",
       );
     },
   });

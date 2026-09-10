@@ -1,7 +1,12 @@
-import { useEffect, useState } from "react";
+import { isAxiosError } from "axios";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Button, Input, Badge } from "@/components/ui";
+import { Badge, Button, Input } from "@/components/ui";
 import { api } from "@/lib/axios";
 
 interface User {
@@ -30,102 +35,89 @@ interface UsersResponse {
 export default function UsersPage() {
   const navigate = useNavigate();
 
-  const [users, setUsers] =
-    useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [search, setSearch] = useState("");
+  const [role, setRole] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [search, setSearch] =
-    useState("");
+  const loadUsers = useCallback(
+    async (
+      currentPage: number,
+      currentRole: string,
+      currentSearch: string,
+    ) => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const [role, setRole] =
-    useState("");
+        const response =
+          await api.get<UsersResponse>(
+            "/admin/users",
+            {
+              params: {
+                page: currentPage,
+                limit: 10,
 
-  const [page, setPage] =
-    useState(1);
+                ...(currentSearch.trim()
+                  ? {
+                      search:
+                        currentSearch.trim(),
+                    }
+                  : {}),
 
-  const [totalPages, setTotalPages] =
-    useState(1);
+                ...(currentRole
+                  ? {
+                      role: currentRole,
+                    }
+                  : {}),
+              },
+            },
+          );
 
-  const [total, setTotal] =
-    useState(0);
+        const data = response.data.data;
 
-  const [loading, setLoading] =
-    useState(true);
+        setUsers(data.users);
+        setTotal(data.total);
+        setTotalPages(data.totalPages);
+      } catch (err: unknown) {
+        const message = isAxiosError<{
+          message?: string;
+        }>(err)
+          ? err.response?.data?.message ??
+            "Foydalanuvchilarni yuklab bo'lmadi."
+          : "Foydalanuvchilarni yuklab bo'lmadi.";
 
-  const [error, setError] =
-    useState("");
-
-  const loadUsers = async (
-  currentPage = page,
-  currentRole = role,
-  currentSearch = search
-) => {
-  try {
-    setLoading(true);
-    setError("");
-
-    const response =
-      await api.get<UsersResponse>(
-        "/admin/users",
-        {
-          params: {
-            page: currentPage,
-            limit: 10,
-
-            ...(currentSearch.trim()
-              ? {
-                  search:
-                    currentSearch.trim(),
-                }
-              : {}),
-
-            ...(currentRole
-              ? {
-                  role: currentRole,
-                }
-              : {}),
-          },
-        }
-      );
-
-    const data =
-      response.data.data;
-
-    setUsers(data.users);
-    setTotal(data.total);
-    setTotalPages(
-      data.totalPages
-    );
-  } catch (err: any) {
-    setError(
-      err?.response?.data?.message ||
-        "Foydalanuvchilarni yuklab bo'lmadi."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    loadUsers(1);
-  }, []);
+    queueMicrotask(() => {
+      void loadUsers(1, "", "");
+    });
+  }, [loadUsers]);
 
   const handleSearch = () => {
-  setPage(1);
-  loadUsers(1, role, search);
-};
+    setPage(1);
+    void loadUsers(1, role, search);
+  };
 
-  const handleRoleChange = (
-  value: string
-) => {
-  setRole(value);
-  setPage(1);
+  const handleRoleChange = (value: string) => {
+    setRole(value);
+    setPage(1);
 
-  loadUsers(1, value, search);
-};
+    void loadUsers(1, value, search);
+  };
 
-  const handlePageChange = (
-    nextPage: number
-  ) => {
+  const handlePageChange = (nextPage: number) => {
     if (
       nextPage < 1 ||
       nextPage > totalPages
@@ -134,7 +126,7 @@ export default function UsersPage() {
     }
 
     setPage(nextPage);
-    loadUsers(nextPage);
+    void loadUsers(nextPage, role, search);
   };
 
   return (
@@ -146,12 +138,11 @@ export default function UsersPage() {
 
         <p className="mt-2 text-[var(--color-muted)]">
           Platformadagi barcha
-          foydalanuvchilarni ko'rish.
+          foydalanuvchilarni ko&apos;rish.
         </p>
       </div>
 
       {/* Filters */}
-
       <div className="mb-6 flex flex-col gap-3 md:flex-row">
         <Input
           value={search}
@@ -170,9 +161,7 @@ export default function UsersPage() {
         <select
           value={role}
           onChange={(e) =>
-            handleRoleChange(
-              e.target.value
-            )
+            handleRoleChange(e.target.value)
           }
           className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2"
         >
@@ -189,15 +178,12 @@ export default function UsersPage() {
           </option>
         </select>
 
-        <Button
-          onClick={handleSearch}
-        >
+        <Button onClick={handleSearch}>
           Qidirish
         </Button>
       </div>
 
       {/* Error */}
-
       {error && (
         <div className="mb-6 rounded-xl border border-red-300 bg-red-50 p-4 text-red-700">
           {error}
@@ -205,7 +191,6 @@ export default function UsersPage() {
       )}
 
       {/* Total */}
-
       {!loading && (
         <p className="mb-4 text-sm text-[var(--color-muted)]">
           Jami foydalanuvchilar:{" "}
@@ -214,7 +199,6 @@ export default function UsersPage() {
       )}
 
       {/* Table */}
-
       <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
         <table className="w-full">
           <thead>
@@ -240,7 +224,7 @@ export default function UsersPage() {
               </th>
 
               <th className="p-4 text-left">
-                Ro'yxatdan o'tgan
+                Ro&apos;yxatdan o&apos;tgan
               </th>
 
               <th className="p-4 text-center">
@@ -296,14 +280,12 @@ export default function UsersPage() {
                   <td className="p-4 text-center">
                     <Badge
                       variant={
-                        user.role ===
-                        "ADMIN"
+                        user.role === "ADMIN"
                           ? "success"
                           : "info"
                       }
                     >
-                      {user.role ===
-                      "ADMIN"
+                      {user.role === "ADMIN"
                         ? "Admin"
                         : "Student"}
                     </Badge>
@@ -319,9 +301,9 @@ export default function UsersPage() {
 
                   <td className="p-4">
                     {new Date(
-                      user.createdAt
+                      user.createdAt,
                     ).toLocaleDateString(
-                      "uz-UZ"
+                      "uz-UZ",
                     )}
                   </td>
 
@@ -330,11 +312,11 @@ export default function UsersPage() {
                       variant="outline"
                       onClick={() =>
                         navigate(
-                          `/admin/users/${user.id}`
+                          `/admin/users/${user.id}`,
                         )
                       }
                     >
-                      Ko'rish
+                      Ko&apos;rish
                     </Button>
                   </td>
                 </tr>
@@ -345,44 +327,35 @@ export default function UsersPage() {
       </div>
 
       {/* Pagination */}
+      {!loading && users.length > 0 && (
+        <div className="mt-5 flex items-center justify-between">
+          <p className="text-sm text-[var(--color-muted)]">
+            Sahifa {page} / {totalPages}
+          </p>
 
-      {!loading &&
-        users.length > 0 && (
-          <div className="mt-5 flex items-center justify-between">
-            <p className="text-sm text-[var(--color-muted)]">
-              Sahifa {page} /{" "}
-              {totalPages}
-            </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={page <= 1}
+              onClick={() =>
+                handlePageChange(page - 1)
+              }
+            >
+              ← Oldingi
+            </Button>
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                disabled={page <= 1}
-                onClick={() =>
-                  handlePageChange(
-                    page - 1
-                  )
-                }
-              >
-                ← Oldingi
-              </Button>
-
-              <Button
-                variant="outline"
-                disabled={
-                  page >= totalPages
-                }
-                onClick={() =>
-                  handlePageChange(
-                    page + 1
-                  )
-                }
-              >
-                Keyingi →
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              disabled={page >= totalPages}
+              onClick={() =>
+                handlePageChange(page + 1)
+              }
+            >
+              Keyingi →
+            </Button>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }

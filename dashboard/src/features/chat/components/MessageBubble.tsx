@@ -35,7 +35,7 @@ export default function MessageBubble({
       >
         {!isMine && (
           <p className="mb-1 text-xs font-semibold text-blue-600">
-            {message.sender.fullName}
+            {message.sender?.fullName ?? "Foydalanuvchi"}
           </p>
         )}
 

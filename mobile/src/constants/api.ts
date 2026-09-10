@@ -12,10 +12,10 @@ const API_PORT = 5000;
 |
 */
 
-const DEV_MACHINE_IP = "192.168.100.182";
+const DEV_MACHINE_IP = "192.168.1.184";
 
 export const API_BASE_URL =
-  "http://192.168.100.182:3000";
+  "http://192.168.1.184:3000";
 
 export const API_URL =
   `${API_BASE_URL}/api/v1`;

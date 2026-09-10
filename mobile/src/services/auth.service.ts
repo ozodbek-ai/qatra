@@ -130,3 +130,86 @@ export async function getMe(
 
   return result as ApiResponse<MeResponse>;
 }
+
+/*
+|--------------------------------------------------------------------------
+| FORGOT PASSWORD
+|--------------------------------------------------------------------------
+*/
+
+export async function forgotPassword(
+  email: string
+) {
+  const response = await fetch(
+    `${API_URL}/auth/forgot-password`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+      }),
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ||
+        "Parolni tiklash so'rovini yuborishda xatolik yuz berdi."
+    );
+  }
+
+  return result as {
+    success: boolean;
+    message: string;
+  };
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| RESET PASSWORD
+|--------------------------------------------------------------------------
+*/
+
+export async function resetPassword(
+  token: string,
+  password: string,
+  confirmPassword: string
+) {
+  const response = await fetch(
+    `${API_URL}/auth/reset-password`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        token,
+        password,
+        confirmPassword,
+      }),
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ||
+        "Parolni tiklashda xatolik yuz berdi."
+    );
+  }
+
+  return result as {
+    success: boolean;
+    message: string;
+  };
+}

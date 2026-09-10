@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, Input, Badge } from "@/components/ui";
 import { api } from "@/lib/axios";
+import { isAxiosError } from "axios";
 
 interface Quiz {
   id: string;
@@ -64,61 +69,72 @@ export default function QuizzesPage() {
   const [error, setError] =
     useState("");
 
-  const loadQuizzes = async (
-    currentPage = page,
-    currentSearch = search
-  ) => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadQuizzes = useCallback(
+    async (
+      currentPage: number,
+      currentSearch: string
+    ) => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const response =
-        await api.get<QuizzesResponse>(
-          "/quizzes/admin",
-          {
-            params: {
-              page: currentPage,
-              limit: 10,
+        const response =
+          await api.get<QuizzesResponse>(
+            "/quizzes/admin",
+            {
+              params: {
+                page: currentPage,
+                limit: 10,
 
-              ...(currentSearch.trim()
-                ? {
-                    search:
-                      currentSearch.trim(),
-                  }
-                : {}),
-            },
-          }
+                ...(currentSearch.trim()
+                  ? {
+                      search:
+                        currentSearch.trim(),
+                    }
+                  : {}),
+              },
+            }
+          );
+
+        const data =
+          response.data.data;
+
+        setQuizzes(data.items);
+
+        setTotal(
+          data.pagination.total
         );
 
-      const data =
-        response.data.data;
+        setTotalPages(
+          data.pagination.totalPages
+        );
+      } catch (err: unknown) {
+        const message =
+          isAxiosError<{
+            message?: string;
+          }>(err)
+            ? err.response?.data?.message ??
+              "Quizlarni yuklab bo'lmadi."
+            : "Quizlarni yuklab bo'lmadi.";
 
-      setQuizzes(data.items);
-      setTotal(
-        data.pagination.total
-      );
-
-      setTotalPages(
-        data.pagination.totalPages
-      );
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message ||
-          "Quizlarni yuklab bo'lmadi."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    loadQuizzes(1, "");
-  }, []);
+    queueMicrotask(() => {
+      void loadQuizzes(1, "");
+    });
+  }, [loadQuizzes]);
 
   const handleSearch = () => {
     setPage(1);
 
-    loadQuizzes(
+    void loadQuizzes(
       1,
       search
     );
@@ -136,7 +152,7 @@ export default function QuizzesPage() {
 
     setPage(nextPage);
 
-    loadQuizzes(
+    void loadQuizzes(
       nextPage,
       search
     );
@@ -157,8 +173,6 @@ export default function QuizzesPage() {
         </div>
       </div>
 
-      {/* Search */}
-
       <div className="mb-6 flex gap-3">
         <Input
           value={search}
@@ -174,9 +188,7 @@ export default function QuizzesPage() {
           className="max-w-md"
         />
 
-        <Button
-          onClick={handleSearch}
-        >
+        <Button onClick={handleSearch}>
           Qidirish
         </Button>
       </div>
@@ -193,8 +205,6 @@ export default function QuizzesPage() {
           <strong>{total}</strong>
         </p>
       )}
-
-      {/* Table */}
 
       <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
         <table className="w-full">
@@ -262,9 +272,7 @@ export default function QuizzesPage() {
 
                     {quiz.description && (
                       <p className="mt-1 max-w-xs truncate text-sm text-[var(--color-muted)]">
-                        {
-                          quiz.description
-                        }
+                        {quiz.description}
                       </p>
                     )}
                   </td>
@@ -309,8 +317,6 @@ export default function QuizzesPage() {
           </tbody>
         </table>
       </div>
-
-      {/* Pagination */}
 
       {!loading &&
         quizzes.length > 0 && (

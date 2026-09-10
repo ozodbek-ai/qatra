@@ -1,6 +1,22 @@
 import { useState } from "react";
 import { api } from "@/lib/axios";
 
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error
+  );
+}
+
 interface CertificateData {
   id: string;
   certificateNo: string;
@@ -61,15 +77,19 @@ export default function CertificateVerifyPage() {
       setCertificate(
         response.data.data
       );
-    } catch (error: any) {
-      setError(
-        error?.response?.data?.message ??
-          "Sertifikat topilmadi."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    } catch (error: unknown) {
+  if (isApiError(error)) {
+    setError(
+      error.response?.data?.message ??
+        "Sertifikat topilmadi.",
+    );
+  } else {
+    setError(
+      "Sertifikat topilmadi.",
+    );
+  }
+}
+  }
 
   return (
     <main className="min-h-screen bg-slate-100 px-6 py-12">

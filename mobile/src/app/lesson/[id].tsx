@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import {
   ActivityIndicator,
   Alert,
@@ -9,40 +11,41 @@ import {
   View,
 } from "react-native";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
-import {
-  useLocalSearchParams,
-  useRouter,
-} from "expo-router";
-
-import {
-  VideoView,
-  useVideoPlayer,
-} from "expo-video";
+import { VideoView, useVideoPlayer } from "expo-video";
 
 import {
   getLessonById,
+  getLessonsByCourse,
   type Lesson,
 } from "@/services/lesson.service";
 
+import { completeLesson } from "@/services/progress.service";
+
 import {
-  completeLesson,
-} from "@/services/progress.service";
+  getQuizById,
+  type Quiz,
+} from "@/services/quiz.service";
+
+import {
+  addLessonViewDuration,
+  markLessonAsViewed,
+} from "@/services/player.service";
 
 
 function formatDuration(
   seconds?: number | null
-) {
-  if (!seconds) {
+): string | null {
+  if (
+    seconds === null ||
+    seconds === undefined ||
+    seconds <= 0
+  ) {
     return null;
   }
 
   const minutes = Math.floor(seconds / 60);
-
   const remainingSeconds = seconds % 60;
 
   return `${minutes}:${remainingSeconds
@@ -71,7 +74,6 @@ function LessonVideo({
       player={player}
       style={styles.video}
       nativeControls
-      allowsFullscreen
       allowsPictureInPicture
     />
   );
@@ -81,9 +83,19 @@ function LessonVideo({
 export default function LessonPlayerScreen() {
   const router = useRouter();
 
-  const { id } = useLocalSearchParams<{
-    id: string;
+  const params = useLocalSearchParams<{
+    id?: string | string[];
+    courseSlug?: string | string[];
   }>();
+
+  const lessonId = Array.isArray(params.id)
+    ? params.id[0]
+    : params.id;
+
+  const courseSlug = Array.isArray(params.courseSlug)
+    ? params.courseSlug[0]
+    : params.courseSlug;
+
 
   const [lesson, setLesson] =
     useState<Lesson | null>(null);
@@ -100,75 +112,305 @@ export default function LessonPlayerScreen() {
   const [completed, setCompleted] =
     useState(false);
 
+  const [quiz, setQuiz] =
+    useState<Quiz | null>(null);
 
-  const loadLesson = async () => {
-    if (!id) {
-      setError("Dars ID topilmadi.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response =
-        await getLessonById(id);
-
-      setLesson(response.data);
-
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Darsni yuklashda xatolik yuz berdi.";
-
-      setError(message);
-
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [quizLoading, setQuizLoading] =
+    useState(false);
 
 
-  const handleCompleteLesson = async () => {
-    if (!id || completing || completed) {
-      return;
-    }
+  /*
+   * VIEW TRACKING REFS
+   */
 
-    try {
-      setCompleting(true);
+  const activityIdRef =
+    useRef<string | null>(null);
 
-      await completeLesson(id);
+  const lessonStartedAtRef =
+    useRef<number | null>(null);
 
-      setCompleted(true);
+  const hasTrackedViewRef =
+    useRef(false);
 
-      Alert.alert(
-        "Tabriklaymiz! 🎉",
-        "Dars muvaffaqiyatli yakunlandi."
-      );
 
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Darsni yakunlashda xatolik yuz berdi.";
+  const loadLesson = useCallback(
+    async () => {
+      if (!lessonId) {
+        setError("Dars ID topilmadi.");
+        setLoading(false);
 
-      Alert.alert(
-        "Xatolik",
-        message
-      );
+        return;
+      }
 
-    } finally {
-      setCompleting(false);
-    }
-  };
+      try {
+        setLoading(true);
+        setError(null);
 
+        setQuiz(null);
+        setCompleted(false);
+
+
+        /*
+         * LESSONNI YUKLASH
+         */
+
+        const lessonResponse =
+          await getLessonById(lessonId);
+
+        const currentLesson =
+          lessonResponse.data;
+
+        setLesson(currentLesson);
+
+
+        /*
+         * LESSON VIEW TRACKING
+         */
+
+        if (!hasTrackedViewRef.current) {
+          hasTrackedViewRef.current = true;
+
+          try {
+            const viewResponse =
+              await markLessonAsViewed(lessonId);
+
+            const newActivityId =
+              viewResponse.data.activityId;
+
+            activityIdRef.current =
+              newActivityId;
+
+            lessonStartedAtRef.current =
+              Date.now();
+
+          } catch (trackingError) {
+            console.log(
+              "Lesson view tracking xatosi:",
+              trackingError
+            );
+
+            hasTrackedViewRef.current = false;
+          }
+        }
+
+
+        /*
+         * QUIZNI ANIQLASH
+         */
+
+        if (currentLesson.courseId) {
+          const lessonsResponse =
+            await getLessonsByCourse(
+              currentLesson.courseId
+            );
+
+          const lessonWithQuiz =
+            lessonsResponse.data.find(
+              (item) => item.id === lessonId
+            );
+
+          if (lessonWithQuiz?.quiz?.id) {
+            setQuizLoading(true);
+
+            try {
+              const quizResponse =
+                await getQuizById(
+                  lessonWithQuiz.quiz.id
+                );
+
+              setQuiz(quizResponse.data);
+
+              if (
+                quizResponse.data.attempt?.passed
+              ) {
+                setCompleted(true);
+              }
+            } catch (quizError) {
+              console.log(
+                "Quiz yuklashda xatolik:",
+                quizError
+              );
+
+              setQuiz(null);
+            } finally {
+              setQuizLoading(false);
+            }
+          }
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Darsni yuklashda xatolik yuz berdi.";
+
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [lessonId]
+  );
+
+
+  /*
+   * LESSONNI YAKUNLASH
+   */
+
+  const handleCompleteLesson =
+    async () => {
+      if (
+        !lessonId ||
+        completing ||
+        completed
+      ) {
+        return;
+      }
+
+
+      /*
+       * QUIZ BO'LSA
+       */
+
+      if (
+        quiz &&
+        !quiz.attempt?.passed
+      ) {
+        router.push({
+          pathname: "/quiz/[id]",
+          params: {
+            id: quiz.id,
+
+            ...(courseSlug
+              ? { courseSlug }
+              : {}),
+          },
+        });
+
+        return;
+      }
+
+
+      try {
+        setCompleting(true);
+
+        await completeLesson(lessonId);
+
+        setCompleted(true);
+
+        Alert.alert(
+          "Tabriklaymiz! 🎉",
+          "Dars muvaffaqiyatli yakunlandi.",
+          [
+            {
+              text: "Kursga qaytish",
+
+              onPress: () => {
+                if (courseSlug) {
+                  router.replace({
+                    pathname:
+                      "/course/[slug]",
+
+                    params: {
+                      slug: courseSlug,
+                    },
+                  });
+
+                  return;
+                }
+
+                router.back();
+              },
+            },
+          ]
+        );
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Darsni yakunlashda xatolik yuz berdi.";
+
+        Alert.alert(
+          "Xatolik",
+          message
+        );
+      } finally {
+        setCompleting(false);
+      }
+    };
+
+
+  /*
+   * LESSON YUKLANISHI
+   */
 
   useEffect(() => {
-    loadLesson();
-  }, [id]);
+    hasTrackedViewRef.current = false;
+    activityIdRef.current = null;
+    lessonStartedAtRef.current = null;
 
+    loadLesson();
+  }, [loadLesson]);
+
+
+  /*
+   * LESSON VIEW DURATION TRACKING
+   *
+   * Component unmount bo'lganda
+   * backendga ko'rilgan vaqt yuboriladi.
+   */
+
+  useEffect(() => {
+    return () => {
+      const sendDuration = async () => {
+        const currentActivityId =
+          activityIdRef.current;
+
+        const startedAt =
+          lessonStartedAtRef.current;
+
+        if (
+          !currentActivityId ||
+          !startedAt
+        ) {
+          return;
+        }
+
+        const durationSeconds =
+          Math.floor(
+            (Date.now() - startedAt) / 1000
+          );
+
+        if (durationSeconds <= 0) {
+          return;
+        }
+
+        try {
+          await addLessonViewDuration(
+            currentActivityId,
+            durationSeconds
+          );
+
+          console.log(
+            "Lesson duration saqlandi:",
+            durationSeconds,
+            "sekund"
+          );
+        } catch (durationError) {
+          console.log(
+            "Lesson duration tracking xatosi:",
+            durationError
+          );
+        }
+      };
+
+      void sendDuration();
+    };
+  }, []);
+
+
+  /*
+   * LOADING
+   */
 
   if (loading) {
     return (
@@ -187,6 +429,10 @@ export default function LessonPlayerScreen() {
     );
   }
 
+
+  /*
+   * ERROR
+   */
 
   if (error || !lesson) {
     return (
@@ -213,7 +459,11 @@ export default function LessonPlayerScreen() {
             style={styles.backButtonSecondary}
             onPress={() => router.back()}
           >
-            <Text style={styles.backButtonSecondaryText}>
+            <Text
+              style={
+                styles.backButtonSecondaryText
+              }
+            >
               Orqaga qaytish
             </Text>
           </TouchableOpacity>
@@ -231,11 +481,10 @@ export default function LessonPlayerScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={
+          styles.scrollContent
+        }
       >
-
-        {/* HEADER */}
-
         <View style={styles.topBar}>
           <TouchableOpacity
             style={styles.backButton}
@@ -247,14 +496,14 @@ export default function LessonPlayerScreen() {
           </TouchableOpacity>
 
           <View style={styles.lessonNumber}>
-            <Text style={styles.lessonNumberText}>
+            <Text
+              style={styles.lessonNumberText}
+            >
               DARS {lesson.order || 1}
             </Text>
           </View>
         </View>
 
-
-        {/* VIDEO PLAYER */}
 
         <View style={styles.videoContainer}>
           {lesson.videoUrl ? (
@@ -275,15 +524,12 @@ export default function LessonPlayerScreen() {
         </View>
 
 
-        {/* CONTENT */}
-
         <View style={styles.content}>
-
-          {lesson.course && (
+          {lesson.course ? (
             <Text style={styles.courseName}>
               {lesson.course.title}
             </Text>
-          )}
+          ) : null}
 
 
           <Text style={styles.title}>
@@ -292,7 +538,6 @@ export default function LessonPlayerScreen() {
 
 
           <View style={styles.metaContainer}>
-
             <View style={styles.metaItem}>
               <Text style={styles.metaIcon}>
                 ▶
@@ -304,7 +549,7 @@ export default function LessonPlayerScreen() {
             </View>
 
 
-            {duration && (
+            {duration ? (
               <View style={styles.metaItem}>
                 <Text style={styles.metaIcon}>
                   ◷
@@ -314,13 +559,14 @@ export default function LessonPlayerScreen() {
                   {duration}
                 </Text>
               </View>
-            )}
-
+            ) : null}
           </View>
 
 
-          {lesson.description && (
-            <View style={styles.descriptionSection}>
+          {lesson.description ? (
+            <View
+              style={styles.descriptionSection}
+            >
               <Text style={styles.sectionTitle}>
                 Dars haqida
               </Text>
@@ -329,18 +575,43 @@ export default function LessonPlayerScreen() {
                 {lesson.description}
               </Text>
             </View>
-          )}
+          ) : null}
+
+
+          {quizLoading ? (
+            <View
+              style={styles.quizLoadingContainer}
+            >
+              <ActivityIndicator
+                size="small"
+                color="#2563EB"
+              />
+
+              <Text
+                style={styles.quizLoadingText}
+              >
+                Quiz yuklanmoqda...
+              </Text>
+            </View>
+          ) : null}
 
 
           <TouchableOpacity
             style={[
               styles.completeButton,
-              completed &&
+
+              (
+                completed ||
+                quiz?.attempt?.passed
+              ) &&
                 styles.completedButton,
             ]}
             onPress={handleCompleteLesson}
             disabled={
-              completing || completed
+              completing ||
+              completed ||
+              quizLoading ||
+              quiz?.attempt?.passed === true
             }
             activeOpacity={0.8}
           >
@@ -348,17 +619,28 @@ export default function LessonPlayerScreen() {
               <ActivityIndicator
                 color="#FFFFFF"
               />
+            ) : completed ||
+              quiz?.attempt?.passed ? (
+              <Text
+                style={styles.completeButtonText}
+              >
+                ✓ Dars yakunlandi
+              </Text>
+            ) : quiz ? (
+              <Text
+                style={styles.completeButtonText}
+              >
+                📝 Quizni topshirish
+              </Text>
             ) : (
-              <Text style={styles.completeButtonText}>
-                {completed
-                  ? "✓ Dars yakunlandi"
-                  : "✓ Darsni tugatdim"}
+              <Text
+                style={styles.completeButtonText}
+              >
+                ✓ Darsni tugatdim
               </Text>
             )}
           </TouchableOpacity>
-
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -399,6 +681,7 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     fontSize: 15,
     textAlign: "center",
+    lineHeight: 22,
   },
 
   retryButton: {
@@ -428,7 +711,6 @@ const styles = StyleSheet.create({
   topBar: {
     height: 70,
     paddingHorizontal: 20,
-
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -439,7 +721,6 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 14,
     backgroundColor: "#0F172A",
-
     justifyContent: "center",
     alignItems: "center",
   },
@@ -457,23 +738,17 @@ const styles = StyleSheet.create({
   },
 
   lessonNumberText: {
-    color: "#93C5FD",
+    color: "#60A5FA",
     fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 0.7,
   },
 
   videoContainer: {
     marginHorizontal: 20,
     height: 230,
-
     borderRadius: 24,
     overflow: "hidden",
-
     backgroundColor: "#000000",
-
-    borderWidth: 1,
-    borderColor: "#1E293B",
   },
 
   video: {
@@ -490,12 +765,12 @@ const styles = StyleSheet.create({
 
   noVideoIcon: {
     fontSize: 42,
+    marginBottom: 12,
   },
 
   noVideoText: {
     color: "#94A3B8",
     fontSize: 14,
-    marginTop: 14,
   },
 
   content: {
@@ -519,13 +794,13 @@ const styles = StyleSheet.create({
 
   metaContainer: {
     flexDirection: "row",
-    gap: 20,
     marginTop: 18,
   },
 
   metaItem: {
     flexDirection: "row",
     alignItems: "center",
+    marginRight: 20,
   },
 
   metaIcon: {
@@ -556,13 +831,23 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
 
+  quizLoadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 24,
+  },
+
+  quizLoadingText: {
+    color: "#94A3B8",
+    fontSize: 14,
+    marginLeft: 10,
+  },
+
   completeButton: {
     marginTop: 32,
     height: 58,
-
     borderRadius: 16,
     backgroundColor: "#2563EB",
-
     justifyContent: "center",
     alignItems: "center",
   },

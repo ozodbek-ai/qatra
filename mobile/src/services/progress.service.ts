@@ -12,12 +12,38 @@ type ApiResponse<T> = {
 };
 
 
+async function getHeaders() {
+  const token = await getAccessToken();
+
+  return {
+    "Content-Type": "application/json",
+
+    ...(token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {}),
+  };
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| COMPLETE LESSON
+|--------------------------------------------------------------------------
+*/
+
 export type LessonProgress = {
   id: string;
+
   userId: string;
+
   lessonId: string;
+
   completed: boolean;
+
   completedAt?: string | null;
+
   lastViewedAt?: string | null;
 };
 
@@ -25,23 +51,12 @@ export type LessonProgress = {
 export async function completeLesson(
   lessonId: string
 ): Promise<ApiResponse<LessonProgress>> {
-  const token = await getAccessToken();
-
   const response = await fetch(
     `${API_URL}/progress/${lessonId}/complete`,
     {
       method: "POST",
 
-      headers: {
-        "Content-Type": "application/json",
-
-        ...(token
-          ? {
-              Authorization:
-                `Bearer ${token}`,
-            }
-          : {}),
-      },
+      headers: await getHeaders(),
     }
   );
 
@@ -58,26 +73,34 @@ export async function completeLesson(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| COURSE PROGRESS
+|--------------------------------------------------------------------------
+*/
+
+export type CourseProgress = {
+  courseId: string;
+
+  courseTitle: string;
+
+  completedLessons: number;
+
+  totalLessons: number;
+
+  progress: number;
+};
+
+
 export async function getCourseProgress(
   courseId: string
-) {
-  const token = await getAccessToken();
-
+): Promise<ApiResponse<CourseProgress>> {
   const response = await fetch(
     `${API_URL}/progress/course/${courseId}`,
     {
       method: "GET",
 
-      headers: {
-        "Content-Type": "application/json",
-
-        ...(token
-          ? {
-              Authorization:
-                `Bearer ${token}`,
-            }
-          : {}),
-      },
+      headers: await getHeaders(),
     }
   );
 
@@ -94,26 +117,56 @@ export async function getCourseProgress(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| CONTINUE LEARNING
+|--------------------------------------------------------------------------
+|
+| Backend:
+|
+| {
+|   courseId,
+|   courseTitle,
+|   nextLesson
+| }
+|
+*/
+
+export type NextLesson = {
+  id: string;
+
+  title: string;
+
+  description?: string | null;
+
+  videoUrl?: string | null;
+
+  order?: number;
+
+  duration?: number | null;
+
+  courseId?: string;
+};
+
+
+export type ContinueLearningResponse = {
+  courseId: string;
+
+  courseTitle: string;
+
+  nextLesson: NextLesson | null;
+};
+
+
 export async function continueLearning(
   courseId: string
-) {
-  const token = await getAccessToken();
-
+): Promise<ApiResponse<ContinueLearningResponse>> {
   const response = await fetch(
     `${API_URL}/progress/continue/${courseId}`,
     {
       method: "GET",
 
-      headers: {
-        "Content-Type": "application/json",
-
-        ...(token
-          ? {
-              Authorization:
-                `Bearer ${token}`,
-            }
-          : {}),
-      },
+      headers: await getHeaders(),
     }
   );
 

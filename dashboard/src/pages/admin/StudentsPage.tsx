@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -9,6 +13,7 @@ import {
 
 import { Button, Input } from "@/components/ui";
 import { api } from "@/lib/axios";
+import { isAxiosError } from "axios";
 
 interface Student {
   id: string;
@@ -62,60 +67,73 @@ export default function StudentsPage() {
   const [totalPages, setTotalPages] =
     useState(1);
 
-  const loadStudents = async (
-    currentPage = 1,
-    currentSearch = ""
-  ) => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadStudents = useCallback(
+    async (
+      currentPage: number,
+      currentSearch: string
+    ) => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const response =
-        await api.get<StudentsResponse>(
-          "/admin/students",
-          {
-            params: {
-              page: currentPage,
-              limit: 10,
+        const response =
+          await api.get<StudentsResponse>(
+            "/admin/students",
+            {
+              params: {
+                page: currentPage,
+                limit: 10,
 
-              ...(currentSearch.trim()
-                ? {
-                    search:
-                      currentSearch.trim(),
-                  }
-                : {}),
-            },
-          }
+                ...(currentSearch.trim()
+                  ? {
+                      search:
+                        currentSearch.trim(),
+                    }
+                  : {}),
+              },
+            }
+          );
+
+        const data =
+          response.data.data;
+
+        setStudents(data.items);
+
+        setTotalPages(
+          data.pagination.totalPages
         );
 
-      const data =
-        response.data.data;
+        setPage(
+          data.pagination.page
+        );
+      } catch (err: unknown) {
+        const message =
+          isAxiosError<{
+            message?: string;
+          }>(err)
+            ? err.response?.data?.message ??
+              "Studentlarni yuklab bo'lmadi."
+            : "Studentlarni yuklab bo'lmadi.";
 
-      setStudents(data.items);
-
-      setTotalPages(
-        data.pagination.totalPages
-      );
-
-      setPage(
-        data.pagination.page
-      );
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message ??
-          "Studentlarni yuklab bo'lmadi."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    loadStudents(1, "");
-  }, []);
+    queueMicrotask(() => {
+      void loadStudents(1, "");
+    });
+  }, [loadStudents]);
 
   const handleSearch = () => {
-    loadStudents(1, search);
+    void loadStudents(
+      1,
+      search
+    );
   };
 
   const handlePageChange = (
@@ -128,7 +146,7 @@ export default function StudentsPage() {
       return;
     }
 
-    loadStudents(
+    void loadStudents(
       nextPage,
       search
     );
@@ -150,9 +168,6 @@ export default function StudentsPage() {
 
   return (
     <div className="p-6 md:p-8">
-
-      {/* Header */}
-
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">
@@ -170,8 +185,6 @@ export default function StudentsPage() {
           <Users className="h-6 w-6" />
         </div>
       </div>
-
-      {/* Search */}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <Input
@@ -198,22 +211,16 @@ export default function StudentsPage() {
         </Button>
       </div>
 
-      {/* Error */}
-
       {error && (
         <div className="mb-6 rounded-xl border border-red-300 bg-red-50 p-4 text-red-700">
           {error}
         </div>
       )}
 
-      {/* Table */}
-
       <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
         <table className="w-full min-w-[1000px]">
-
           <thead>
             <tr className="border-b border-[var(--color-border)]">
-
               <th className="p-4 text-left">
                 Student
               </th>
@@ -249,12 +256,10 @@ export default function StudentsPage() {
               <th className="p-4 text-center">
                 Amal
               </th>
-
             </tr>
           </thead>
 
           <tbody>
-
             {loading ? (
               <tr>
                 <td
@@ -280,12 +285,8 @@ export default function StudentsPage() {
                     key={student.id}
                     className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-slate-50/50"
                   >
-
-                    {/* Student */}
-
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border font-semibold">
                           {student.fullName
                             .charAt(0)
@@ -301,11 +302,8 @@ export default function StudentsPage() {
                             {student.email}
                           </p>
                         </div>
-
                       </div>
                     </td>
-
-                    {/* Holat */}
 
                     <td className="p-4">
                       {student.isActive ? (
@@ -321,15 +319,11 @@ export default function StudentsPage() {
                       )}
                     </td>
 
-                    {/* Kurslar */}
-
                     <td className="p-4 text-center">
                       <span className="font-semibold">
                         {student.enrolledCourses}
                       </span>
                     </td>
-
-                    {/* Tugallangan kurslar */}
 
                     <td className="p-4 text-center">
                       <span className="font-semibold text-green-600">
@@ -337,19 +331,13 @@ export default function StudentsPage() {
                       </span>
                     </td>
 
-                    {/* Darslar */}
-
                     <td className="p-4 text-center">
                       {student.completedLessons}
                     </td>
 
-                    {/* Quizlar */}
-
                     <td className="p-4 text-center">
                       {student.quizAttempts}
                     </td>
-
-                    {/* Sertifikat */}
 
                     <td className="p-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
@@ -360,8 +348,6 @@ export default function StudentsPage() {
                         </span>
                       </div>
                     </td>
-
-                    {/* Sana */}
 
                     <td className="p-4">
                       <div>
@@ -382,8 +368,6 @@ export default function StudentsPage() {
                       </div>
                     </td>
 
-                    {/* Action */}
-
                     <td className="p-4 text-center">
                       <Button
                         type="button"
@@ -397,29 +381,23 @@ export default function StudentsPage() {
                         Ko‘rish
                       </Button>
                     </td>
-
                   </tr>
                 )
               )
             )}
-
           </tbody>
         </table>
       </div>
 
-      {/* Pagination */}
-
       {!loading &&
         students.length > 0 && (
           <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
             <p className="text-sm text-[var(--color-muted)]">
               Sahifa {page} /{" "}
               {totalPages}
             </p>
 
             <div className="flex gap-2">
-
               <Button
                 type="button"
                 variant="outline"
@@ -447,12 +425,9 @@ export default function StudentsPage() {
               >
                 Keyingi →
               </Button>
-
             </div>
-
           </div>
         )}
-
     </div>
   );
 }

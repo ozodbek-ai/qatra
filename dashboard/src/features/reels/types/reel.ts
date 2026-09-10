@@ -2,6 +2,10 @@ import type {
   ReelCategory,
 } from "./category";
 
+export type {
+  ReelCategory,
+} from "./category";
+
 export interface ReelUser {
   id: string;
 

@@ -19,6 +19,11 @@ import {
   saveAccessToken,
 } from "@/services/storage.service";
 
+import {
+  connectSocket,
+  disconnectSocket,
+} from "@/services/socket.service";
+
 
 type AuthContextType = {
   user: User | null;
@@ -98,22 +103,31 @@ export function AuthProvider({
   }, []);
 
 
-  const login = async (
-    email: string,
-    password: string
-  ) => {
-    const response =
-      await loginUser(
-        email.trim(),
-        password
-      );
-
-    await saveAccessToken(
-      response.data.accessToken
+const login = async (
+  email: string,
+  password: string
+) => {
+  const response =
+    await loginUser(
+      email.trim(),
+      password
     );
 
-    setUser(response.data.user);
-  };
+  await saveAccessToken(
+    response.data.accessToken
+  );
+
+  setUser(response.data.user);
+
+  try {
+    await connectSocket();
+  } catch (error) {
+    console.log(
+      "Socket ulanishida xatolik:",
+      error
+    );
+  }
+};
 
   const register = async (
   fullName: string,
@@ -128,11 +142,13 @@ export function AuthProvider({
 };
 
 
-  const logout = async () => {
-    await removeAccessToken();
+const logout = async () => {
+  disconnectSocket();
 
-    setUser(null);
-  };
+  await removeAccessToken();
+
+  setUser(null);
+};
 
 
   const refreshUser = async () => {
@@ -155,6 +171,15 @@ export function AuthProvider({
       avatarUrl:
         response.data.avatarUrl ?? null,
     });
+
+    try {
+  await connectSocket();
+} catch (error) {
+  console.log(
+    "Session tiklanganda socket ulanishida xatolik:",
+    error
+  );
+}
   };
 
 

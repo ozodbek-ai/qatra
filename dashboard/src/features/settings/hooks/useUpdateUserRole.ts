@@ -9,6 +9,8 @@ import {
   type UpdateUserRole,
 } from "../api/updateUserRole";
 
+import { isAxiosError } from "axios";
+
 export const useUpdateUserRole =
   () => {
     const queryClient =
@@ -42,14 +44,13 @@ export const useUpdateUserRole =
         });
       },
 
-      onError: (
-        error: any
-      ) => {
-        toast.error(
-          error?.response?.data
-            ?.message ??
-            "Foydalanuvchi rolini o'zgartirishda xatolik yuz berdi."
-        );
-      },
+      onError: (error: unknown) => {
+  const message = isAxiosError<{ message?: string }>(error)
+    ? error.response?.data?.message ??
+      "Foydalanuvchi rolini o'zgartirishda xatolik yuz berdi."
+    : "Foydalanuvchi rolini o'zgartirishda xatolik yuz berdi.";
+
+  toast.error(message);
+},
     });
   };

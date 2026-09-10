@@ -4,6 +4,17 @@ import { toast } from "sonner";
 import { login } from "../api/login";
 import { useAuthStore } from "../store/auth.store";
 
+type ApiErrorResponse = {
+  message?: string;
+};
+
+type ApiError = {
+  response?: {
+    status?: number;
+    data?: ApiErrorResponse;
+  };
+};
+
 export function useLogin() {
   const auth = useAuthStore();
 
@@ -18,11 +29,11 @@ export function useLogin() {
 
       auth.login(
         accessToken,
-        user
+        user,
       );
 
       toast.success(
-        "Tizimga muvaffaqiyatli kirdingiz."
+        "Tizimga muvaffaqiyatli kirdingiz.",
       );
 
       const isAdmin =
@@ -37,12 +48,15 @@ export function useLogin() {
       window.location.replace("/dashboard");
     },
 
-    onError(error: any) {
+    onError(error) {
+      const apiError =
+        error as ApiError;
+
       const status =
-        error?.response?.status;
+        apiError.response?.status;
 
       const message =
-        error?.response?.data?.message;
+        apiError.response?.data?.message;
 
       if (
         status === 401 ||
@@ -50,7 +64,7 @@ export function useLogin() {
       ) {
         toast.error(
           message ||
-            "Login yoki parol noto'g'ri."
+            "Login yoki parol noto'g'ri.",
         );
 
         return;
@@ -58,7 +72,7 @@ export function useLogin() {
 
       toast.error(
         message ||
-          "Tizimga kirishda xatolik yuz berdi."
+          "Tizimga kirishda xatolik yuz berdi.",
       );
     },
   });

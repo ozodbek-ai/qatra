@@ -108,14 +108,17 @@ export default function StudentLayout() {
           <NavLink
             key={item.href}
             to={item.href}
-            className={({ isActive }) =>
-              [
-                "flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white",
-              ].join(" ")
-            }
+           className={(
+  { isActive }: { isActive: boolean },
+) =>
+  [
+    "flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
+
+    isActive
+      ? "bg-blue-600 text-white"
+      : "text-slate-300 hover:bg-slate-800 hover:text-white",
+  ].join(" ")
+}
           >
             <Icon size={20} />
             <span>{item.title}</span>

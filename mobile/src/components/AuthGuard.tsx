@@ -7,8 +7,8 @@ import {
 import { useEffect } from "react";
 
 import {
-  useSegments,
   useRouter,
+  useSegments,
 } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
@@ -18,10 +18,7 @@ export function AuthGuard({
 }: {
   children: React.ReactNode;
 }) {
-  const {
-    user,
-    isLoading,
-  } = useAuth();
+  const { user, isLoading } = useAuth();
 
   const segments = useSegments();
   const router = useRouter();
@@ -31,54 +28,37 @@ export function AuthGuard({
       return;
     }
 
-    const currentRoute = segments[0];
+    const inTabsGroup =
+      segments[0] === "(tabs)";
 
-    const isLoginRoute =
-      currentRoute === "login";
+    const currentRoute =
+      segments[0];
 
-    const isRegisterRoute =
+    const isPublicRoute =
+      !currentRoute ||
+      currentRoute === "welcome" ||
+      currentRoute === "onboarding" ||
+      currentRoute === "auth" ||
+      currentRoute === "login" ||
       currentRoute === "register";
 
-    const isAuthRoute =
-      isLoginRoute || isRegisterRoute;
-
-    const isWelcomeRoute =
-      currentRoute === undefined;
-
-    const isOnboardingRoute =
-      currentRoute === "onboarding";
-
-    const isAuthScreen =
-      currentRoute === "auth";
-
-    // LOGIN QILGAN USER
-    if (user) {
-      // Login/Register sahifasida bo'lsa
-      if (isAuthRoute) {
-        router.replace("/explore");
-        return;
-      }
-
-      // Welcome sahifasida bo'lsa
-      if (isWelcomeRoute) {
-        router.replace("/explore");
-        return;
-      }
-
+    // User login qilmagan bo'lsa
+    if (!user && !isPublicRoute) {
+      router.replace("/auth");
       return;
     }
 
-    // LOGIN QILMAGAN USER
-
-    const isPublicRoute =
-      isWelcomeRoute ||
-      isOnboardingRoute ||
-      isAuthScreen ||
-      isAuthRoute;
-
-    // Protected sahifaga kirishga urinsa
-    if (!isPublicRoute) {
-      router.replace("/auth");
+    // Login qilgan user auth sahifalarida qolmasligi kerak
+    if (
+      user &&
+      !inTabsGroup &&
+      (
+        currentRoute === "auth" ||
+        currentRoute === "login" ||
+        currentRoute === "register"
+      )
+    ) {
+      router.replace("/(tabs)");
     }
   }, [
     user,
@@ -105,7 +85,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#020617",
-
     justifyContent: "center",
     alignItems: "center",
   },

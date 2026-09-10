@@ -70,38 +70,25 @@ const handleDurationUpdate =
     [updateLessonViewDuration]
   );
 
-  /*
-   * ==========================================
-   * INITIAL LESSON
-   * ==========================================
-   *
-   * Tartib:
-   *
-   * 1. URL'dagi ?lesson=...
-   * 2. Backend nextLesson
-   * 3. Birinchi tugallanmagan dars
-   * 4. Birinchi dars
-   */
+/*
+ * ==========================================
+ * INITIAL LESSON
+ * ==========================================
+ */
 
 useEffect(() => {
   if (!data) {
     return;
   }
 
-  setSelectedLesson((current) => {
+  const nextSelectedLesson = (() => {
     /*
-     * 1. URL orqali aniq dars so'ralgan bo'lsa,
-     *    shu darsni ochamiz.
-     *
-     *    Masalan:
-     *    /player/courseId?lesson=lessonId
+     * 1. URL orqali aniq dars so'ralgan bo'lsa
      */
     if (requestedLessonId) {
-      const requestedLesson =
-        data.lessons.find(
-          (lesson) =>
-            lesson.id === requestedLessonId
-        );
+      const requestedLesson = data.lessons.find(
+        (lesson) => lesson.id === requestedLessonId
+      );
 
       if (requestedLesson) {
         return requestedLesson;
@@ -110,106 +97,92 @@ useEffect(() => {
 
     /*
      * 2. Hozirgi dars mavjud bo'lsa,
-     *    yangi ma'lumotdan uning yangilangan
-     *    holatini olamiz.
+     *    uning yangilangan holatini olamiz.
      */
-    if (current) {
-      const updatedLesson =
-        data.lessons.find(
-          (lesson) =>
-            lesson.id === current.id
-        );
+    if (selectedLesson) {
+      const updatedLesson = data.lessons.find(
+        (lesson) => lesson.id === selectedLesson.id
+      );
 
       /*
        * Hozirgi dars hali tugallanmagan bo'lsa,
        * shu darsda qolamiz.
        */
-      if (
-        updatedLesson &&
-        !updatedLesson.completed
-      ) {
+      if (updatedLesson && !updatedLesson.completed) {
         return updatedLesson;
       }
 
       /*
-       * MUHIM:
-       *
-       * Agar oldingi dars hozir completed
-       * bo'lib qolgan bo'lsa, demak:
-       *
-       * - student Complete bosgan
-       * yoki
-       * - quizni muvaffaqiyatli topshirgan.
-       *
-       * Shuning uchun keyingi darsni ochamiz.
+       * Joriy dars tugagan bo'lsa,
+       * keyingi darsga o'tamiz.
        */
-      if (
-        updatedLesson?.completed &&
-        data.nextLesson
-      ) {
+      if (updatedLesson?.completed && data.nextLesson) {
         return data.nextLesson;
       }
     }
 
     /*
-     * 3. Backend bergan nextLesson.
-     *
-     * Bu quizdan keyin eng muhim qism.
+     * 3. Backend nextLesson
      */
     if (data.nextLesson) {
       return data.nextLesson;
     }
 
     /*
-     * 4. Backend nextLesson bermagan bo'lsa,
-     *    birinchi tugallanmagan darsni olamiz.
+     * 4. Birinchi tugallanmagan dars
      */
-    const firstIncomplete =
-      data.lessons.find(
-        (lesson) =>
-          !lesson.completed
-      );
+    const firstIncomplete = data.lessons.find(
+      (lesson) => !lesson.completed
+    );
 
     if (firstIncomplete) {
       return firstIncomplete;
     }
 
     /*
-     * 5. Barcha darslar tugagan bo'lsa.
+     * 5. Barcha darslar tugagan bo'lsa
      */
     return data.lessons[0] ?? null;
+  })();
+
+  queueMicrotask(() => {
+    setSelectedLesson(nextSelectedLesson);
   });
 }, [
   data,
   requestedLessonId,
+  selectedLesson,
 ]);
-
-  /*
-   * ==========================================
-   * MARK LESSON AS VIEWED
-   * ==========================================
-   */
+/*
+ * ==========================================
+ * MARK LESSON AS VIEWED
+ * ==========================================
+ */
 
 useEffect(() => {
   if (!selectedLesson) {
-    setLessonActivityId(null);
+    queueMicrotask(() => {
+      setLessonActivityId(null);
+    });
+
     return;
   }
 
-  setLessonActivityId(null);
+  queueMicrotask(() => {
+    setLessonActivityId(null);
+  });
 
-  markLessonViewed.mutate(
-    selectedLesson.id,
-    {
-      onSuccess: (result) => {
-        setLessonActivityId(
-          result.activityId
-        );
-      },
-    }
-  );
-}, [selectedLesson?.id]);
-
+  markLessonViewed.mutate(selectedLesson.id, {
+    onSuccess: (result) => {
+      queueMicrotask(() => {
+        setLessonActivityId(result.activityId);
+      });
+    },
+  });
+}, [
+  markLessonViewed,
+  selectedLesson,
+]);
   /*
    * ==========================================
    * LOADING

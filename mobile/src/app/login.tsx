@@ -56,11 +56,11 @@ export default function LoginScreen() {
 
   try {
     await login(
-      email.trim(),
-      password
-    );
+  email.trim(),
+  password
+);
 
-    router.replace("/");
+router.replace("/");
 
   } catch (error) {
     const message =
@@ -132,11 +132,15 @@ export default function LoginScreen() {
                 Parol
               </Text>
 
-              <TouchableOpacity>
-                <Text style={styles.forgotPassword}>
-                  Parolni unutdingizmi?
-                </Text>
-              </TouchableOpacity>
+              <TouchableOpacity
+  onPress={() =>
+    router.push("/forgot-password")
+  }
+>
+  <Text style={styles.forgotPassword}>
+    Parolni unutdingizmi?
+  </Text>
+</TouchableOpacity>
             </View>
 
             <View style={styles.passwordContainer}>

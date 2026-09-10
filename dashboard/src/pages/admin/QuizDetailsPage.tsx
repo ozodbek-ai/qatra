@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { Badge, Button, Input } from "@/components/ui";
 import { api } from "@/lib/axios";
+import { isAxiosError } from "axios";
 
 interface Option {
   id: string;
@@ -96,7 +101,8 @@ export default function QuizDetailsPage() {
     },
   ]);
 
-  const loadQuiz = async () => {
+const loadQuiz = useCallback(
+  async () => {
     if (!quizId) {
       setError("Quiz ID topilmadi.");
       setLoading(false);
@@ -113,19 +119,29 @@ export default function QuizDetailsPage() {
         );
 
       setQuiz(response.data.data);
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message ||
-          "Quizni yuklab bo'lmadi."
-      );
+    } catch (err: unknown) {
+      const message =
+        isAxiosError<{
+          message?: string;
+        }>(err)
+          ? err.response?.data?.message ??
+            "Quizni yuklab bo'lmadi"
+          : "Quizni yuklab bo'lmadi";
+
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  },
+  [quizId]
+);
 
-  useEffect(() => {
-    loadQuiz();
-  }, [quizId]);
+useEffect(() => {
+  queueMicrotask(() => {
+    void loadQuiz();
+  });
+}, [loadQuiz]);
+
 
   const resetQuestionForm = () => {
     setQuestionText("");
@@ -321,12 +337,14 @@ export default function QuizDetailsPage() {
         await loadQuiz();
 
         closeQuestionForm();
-      } catch (err: any) {
-        setFormError(
-          err?.response?.data?.message ||
-            "Savol yaratishda xatolik yuz berdi."
-        );
-      } finally {
+      } catch (err: unknown) {
+  const message = isAxiosError<{ message?: string }>(err)
+    ? err.response?.data?.message ??
+      "Savol yaratishda xatolik yuz berdi."
+    : "Savol yaratishda xatolik yuz berdi.";
+
+  setError(message);
+} finally {
         setSavingQuestion(false);
       }
     };

@@ -59,7 +59,7 @@ export default function OnboardingScreen() {
 
   const goNext = () => {
     if (isAuthenticated && user) {
-      router.replace("/explore");
+      router.replace("/");
     } else {
       router.replace("/auth");
     }

@@ -3,6 +3,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
+import { isAxiosError } from "axios";
+
 import { toast } from "sonner";
 
 import {
@@ -29,11 +31,13 @@ export function useCreateCategory() {
       );
     },
 
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ??
-          "Kategoriya yaratishda xatolik yuz berdi."
-      );
-    },
+    onError: (error: unknown) => {
+  const message = isAxiosError<{ message?: string }>(error)
+    ? error.response?.data?.message ??
+      "Kategoriya yaratishda xatolik yuz berdi."
+    : "Kategoriya yaratishda xatolik yuz berdi.";
+
+  toast.error(message);
+},
   });
 }

@@ -50,7 +50,7 @@ export default function ReelMessage({
       <div className="max-w-[85%] md:max-w-[420px]">
         {!isMine && (
           <p className="mb-2 px-1 text-xs font-semibold text-slate-500">
-            {message.sender.fullName}
+            {message.sender?.fullName ??  "Foydalanuvchi"}
           </p>
         )}
 

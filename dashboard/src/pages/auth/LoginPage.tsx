@@ -7,11 +7,11 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Input,
 } from "@/components/ui";
 
 import { useLogin } from "@/features/auth/hooks/useLogin";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { SmoothInput } from "@/components/ui/input/SmoothInput";
 
 import type { LoginRequest } from "@/types/auth";
 
@@ -66,28 +66,28 @@ export default function LoginPage() {
             noValidate
           >
             <div className="space-y-2">
-              <Input
-                placeholder="Email"
-                type="email"
-                autoComplete="email"
-                variant={
-                  errors.email
-                    ? "error"
-                    : "default"
-                }
-                aria-invalid={Boolean(
-                  errors.email
-                )}
-                aria-describedby={
-                  errors.email
-                    ? "email-error"
-                    : undefined
-                }
-                {...register("email", {
-                  required:
-                    "Iltimos, emailni kiriting",
-                })}
-              />
+              <SmoothInput
+  placeholder="Email"
+  type="email"
+  autoComplete="email"
+  variant={
+    errors.email
+      ? "error"
+      : "default"
+  }
+  aria-invalid={Boolean(
+    errors.email,
+  )}
+  aria-describedby={
+    errors.email
+      ? "email-error"
+      : undefined
+  }
+  {...register("email", {
+    required:
+      "Iltimos, emailni kiriting",
+  })}
+/>
 
               {errors.email && (
                 <p
@@ -101,28 +101,28 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Input
-                placeholder="Parol"
-                type="password"
-                autoComplete="current-password"
-                variant={
-                  errors.password
-                    ? "error"
-                    : "default"
-                }
-                aria-invalid={Boolean(
-                  errors.password
-                )}
-                aria-describedby={
-                  errors.password
-                    ? "password-error"
-                    : undefined
-                }
-                {...register("password", {
-                  required:
-                    "Iltimos, parolni kiriting",
-                })}
-              />
+              <SmoothInput
+  placeholder="Parol"
+  type="password"
+  autoComplete="current-password"
+  variant={
+    errors.password
+      ? "error"
+      : "default"
+  }
+  aria-invalid={Boolean(
+    errors.password,
+  )}
+  aria-describedby={
+    errors.password
+      ? "password-error"
+      : undefined
+  }
+  {...register("password", {
+    required:
+      "Iltimos, parolni kiriting",
+  })}
+/>
 
               {errors.password && (
                 <p
